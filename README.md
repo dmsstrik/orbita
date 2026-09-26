@@ -38,7 +38,7 @@ python3 -m venv .venv
 .venv/bin/python run.py
 ```
 
-На macOS можно просто открыть «Запустить Орбиту.command». Токен VK — переменная окружения `VK_TOKEN` или файл `.env`.
+Токен VK — переменная окружения `VK_TOKEN` или файл `.env` (см. `.env.example`).
 
 ## Примеры данных
 
@@ -66,13 +66,6 @@ python3 -m venv .venv
 ```bash
 .venv/bin/python -m pip install -e ".[dev]"
 .venv/bin/python -m pytest          # 142 теста
-```
-
-Дополнительно воспроизводится сквозной сценарий в браузере (`node tests/browser-smoke.cjs`, требуется Playwright): импорт, анализ, кандидаты, эксперименты, экспорты, проекты.
-
-Независимая верификация математики:
-
-```bash
 PYTHONPATH=. .venv/bin/python tools/verify_theory.py     # орбиты vs полный перебор перестановок
 PYTHONPATH=. .venv/bin/python tools/verify_detection.py  # обнаружение внедрённых клонов на SNAP
 ```
