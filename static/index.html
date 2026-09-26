@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#192a29">
+  <meta name="description" content="Орбита — локальный инструмент исследования симметрий социальных графов.">
+  <title>Орбита — исследование графов</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Перейти к содержимому</a>
+  <aside class="rail" aria-label="Основная навигация">
+    <a class="brand" href="#graph" aria-label="Орбита — граф"><span class="brand-mark" aria-hidden="true"><i></i><i></i><b></b></span><span>орбита</span></a>
+    <nav class="nav-items">
+      <button class="nav-item" data-view="data" aria-label="Данные"><span data-icon="database"></span><span>Данные</span></button>
+      <button class="nav-item active" data-view="graph" aria-label="Граф" aria-current="page"><span data-icon="network"></span><span>Граф</span></button>
+      <button class="nav-item" data-view="candidates" aria-label="Кандидаты"><span data-icon="users"></span><span>Кандидаты</span></button>
+      <button class="nav-item" data-view="experiments" aria-label="Эксперименты"><span data-icon="flask"></span><span>Опыты</span></button>
+    </nav>
+    <div class="rail-bottom"><button class="nav-item" data-action="methodology"><span data-icon="book"></span><span>Методика</span></button><span class="local-dot" title="Данные обрабатываются на этом компьютере"></span><span class="rail-caption">ЛОКАЛЬНО</span></div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="breadcrumb"><span id="current-section">Граф</span></div>
+      <div class="topbar-actions"><span id="connection" class="connection"><i></i>Локальный сеанс</span><button class="button button-small button-outline" data-action="open-projects"><span data-icon="folder"></span><span>Проекты</span></button><button class="button button-small button-dark" id="save-project" data-action="save-project" disabled><span data-icon="save"></span><span>Сохранить</span></button></div>
+    </header>
+    <main id="workspace" tabindex="-1" aria-busy="true"><div class="boot"><span class="spinner"></span><h1>Собираем первую орбиту</h1><p>Загружаем демонстрационный граф и вычисляем его симметрии.</p></div></main>
+    <footer class="app-footer"><span><b>Орбита</b><span class="footer-divider">/</span>Симметрии социальных графов</span><span><button class="link-button" data-action="methodology">Методика</button><span class="footer-divider">/</span>версия <span id="app-version">1.0</span></span></footer>
+  </div>
+  <div id="toast-stack" class="toast-stack" aria-live="polite" aria-atomic="false"></div>
+  <div id="modal-root"></div>
+  <div id="busy-strip" class="busy-strip" hidden><span class="spinner"></span><span id="busy-label">Обработка…</span></div>
+</body>
+</html>

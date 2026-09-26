@@ -1,0 +1,18 @@
+services:
+  orbita:
+    build: .
+    image: orbita:1.1.0
+    container_name: orbita
+    ports:
+      - "8787:8787"
+    environment:
+      - VK_TOKEN=${VK_TOKEN}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - orbita-projects:/data/projects
+    restart: unless-stopped
+
+volumes:
+  orbita-projects:

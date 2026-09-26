@@ -1,0 +1,1697 @@
+{
+ "name": "SNAP ego-Facebook 698",
+ "nodes": [
+  {
+   "id": "fb698:698",
+   "label": "Аккаунт 698 (центр)"
+  },
+  {
+   "id": "fb698:697",
+   "label": "fb698·697"
+  },
+  {
+   "id": "fb698:703",
+   "label": "fb698·703"
+  },
+  {
+   "id": "fb698:708",
+   "label": "fb698·708"
+  },
+  {
+   "id": "fb698:713",
+   "label": "fb698·713"
+  },
+  {
+   "id": "fb698:719",
+   "label": "fb698·719"
+  },
+  {
+   "id": "fb698:729",
+   "label": "fb698·729"
+  },
+  {
+   "id": "fb698:745",
+   "label": "fb698·745"
+  },
+  {
+   "id": "fb698:747",
+   "label": "fb698·747"
+  },
+  {
+   "id": "fb698:753",
+   "label": "fb698·753"
+  },
+  {
+   "id": "fb698:769",
+   "label": "fb698·769"
+  },
+  {
+   "id": "fb698:772",
+   "label": "fb698·772"
+  },
+  {
+   "id": "fb698:774",
+   "label": "fb698·774"
+  },
+  {
+   "id": "fb698:776",
+   "label": "fb698·776"
+  },
+  {
+   "id": "fb698:798",
+   "label": "fb698·798"
+  },
+  {
+   "id": "fb698:800",
+   "label": "fb698·800"
+  },
+  {
+   "id": "fb698:803",
+   "label": "fb698·803"
+  },
+  {
+   "id": "fb698:804",
+   "label": "fb698·804"
+  },
+  {
+   "id": "fb698:805",
+   "label": "fb698·805"
+  },
+  {
+   "id": "fb698:810",
+   "label": "fb698·810"
+  },
+  {
+   "id": "fb698:811",
+   "label": "fb698·811"
+  },
+  {
+   "id": "fb698:819",
+   "label": "fb698·819"
+  },
+  {
+   "id": "fb698:823",
+   "label": "fb698·823"
+  },
+  {
+   "id": "fb698:825",
+   "label": "fb698·825"
+  },
+  {
+   "id": "fb698:828",
+   "label": "fb698·828"
+  },
+  {
+   "id": "fb698:830",
+   "label": "fb698·830"
+  },
+  {
+   "id": "fb698:840",
+   "label": "fb698·840"
+  },
+  {
+   "id": "fb698:856",
+   "label": "fb698·856"
+  },
+  {
+   "id": "fb698:857",
+   "label": "fb698·857"
+  },
+  {
+   "id": "fb698:858",
+   "label": "fb698·858"
+  },
+  {
+   "id": "fb698:859",
+   "label": "fb698·859"
+  },
+  {
+   "id": "fb698:861",
+   "label": "fb698·861"
+  },
+  {
+   "id": "fb698:862",
+   "label": "fb698·862"
+  },
+  {
+   "id": "fb698:863",
+   "label": "fb698·863"
+  },
+  {
+   "id": "fb698:864",
+   "label": "fb698·864"
+  },
+  {
+   "id": "fb698:865",
+   "label": "fb698·865"
+  },
+  {
+   "id": "fb698:866",
+   "label": "fb698·866"
+  },
+  {
+   "id": "fb698:867",
+   "label": "fb698·867"
+  },
+  {
+   "id": "fb698:868",
+   "label": "fb698·868"
+  },
+  {
+   "id": "fb698:869",
+   "label": "fb698·869"
+  },
+  {
+   "id": "fb698:870",
+   "label": "fb698·870"
+  },
+  {
+   "id": "fb698:871",
+   "label": "fb698·871"
+  },
+  {
+   "id": "fb698:872",
+   "label": "fb698·872"
+  },
+  {
+   "id": "fb698:873",
+   "label": "fb698·873"
+  },
+  {
+   "id": "fb698:874",
+   "label": "fb698·874"
+  },
+  {
+   "id": "fb698:876",
+   "label": "fb698·876"
+  },
+  {
+   "id": "fb698:877",
+   "label": "fb698·877"
+  },
+  {
+   "id": "fb698:878",
+   "label": "fb698·878"
+  },
+  {
+   "id": "fb698:879",
+   "label": "fb698·879"
+  },
+  {
+   "id": "fb698:880",
+   "label": "fb698·880"
+  },
+  {
+   "id": "fb698:881",
+   "label": "fb698·881"
+  },
+  {
+   "id": "fb698:882",
+   "label": "fb698·882"
+  },
+  {
+   "id": "fb698:884",
+   "label": "fb698·884"
+  },
+  {
+   "id": "fb698:885",
+   "label": "fb698·885"
+  },
+  {
+   "id": "fb698:886",
+   "label": "fb698·886"
+  },
+  {
+   "id": "fb698:887",
+   "label": "fb698·887"
+  },
+  {
+   "id": "fb698:888",
+   "label": "fb698·888"
+  },
+  {
+   "id": "fb698:889",
+   "label": "fb698·889"
+  },
+  {
+   "id": "fb698:890",
+   "label": "fb698·890"
+  },
+  {
+   "id": "fb698:893",
+   "label": "fb698·893"
+  },
+  {
+   "id": "fb698:894",
+   "label": "fb698·894"
+  },
+  {
+   "id": "fb698:895",
+   "label": "fb698·895"
+  }
+ ],
+ "edges": [
+  {
+   "source": "fb698:697",
+   "target": "fb698:698"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:708"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:713"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:719"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:745"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:753"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:769"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:772"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:697",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:703"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:708"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:713"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:719"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:729"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:745"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:753"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:769"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:772"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:776"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:798"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:803"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:804"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:811"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:825"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:857"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:858"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:859"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:861"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:862"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:863"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:864"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:865"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:866"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:867"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:868"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:870"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:871"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:872"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:873"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:874"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:877"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:879"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:884"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:893"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:894"
+  },
+  {
+   "source": "fb698:698",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:719"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:703",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:713"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:719"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:753"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:769"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:811"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:708",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:719"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:745"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:772"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:713",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:745"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:772"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:719",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:753"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:804"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:861"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:863"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:729",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:747"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:745",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:753"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:769"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:803"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:804"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:747",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:769"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:861"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:753",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:774"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:798"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:811"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:769",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:772",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:772",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:772",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:772",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:800"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:811"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:774",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:867"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:872"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:873"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:874"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:877"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:776",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:805"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:811"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:800",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:803",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:803",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:861"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:863"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:804",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:810"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:819"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:805",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:810",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:810",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:810",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:811",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:811",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:811",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:823"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:819",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:823",
+   "target": "fb698:828"
+  },
+  {
+   "source": "fb698:823",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:823",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:823",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:823",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:825",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:825",
+   "target": "fb698:864"
+  },
+  {
+   "source": "fb698:825",
+   "target": "fb698:884"
+  },
+  {
+   "source": "fb698:825",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:828",
+   "target": "fb698:830"
+  },
+  {
+   "source": "fb698:828",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:828",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:828",
+   "target": "fb698:880"
+  },
+  {
+   "source": "fb698:830",
+   "target": "fb698:840"
+  },
+  {
+   "source": "fb698:830",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:840",
+   "target": "fb698:856"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:861"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:863"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:864"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:869"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:856",
+   "target": "fb698:893"
+  },
+  {
+   "source": "fb698:857",
+   "target": "fb698:862"
+  },
+  {
+   "source": "fb698:857",
+   "target": "fb698:865"
+  },
+  {
+   "source": "fb698:857",
+   "target": "fb698:868"
+  },
+  {
+   "source": "fb698:857",
+   "target": "fb698:871"
+  },
+  {
+   "source": "fb698:858",
+   "target": "fb698:870"
+  },
+  {
+   "source": "fb698:858",
+   "target": "fb698:871"
+  },
+  {
+   "source": "fb698:858",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:858",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:859",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:861",
+   "target": "fb698:863"
+  },
+  {
+   "source": "fb698:861",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:861",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:861",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:861",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:862",
+   "target": "fb698:865"
+  },
+  {
+   "source": "fb698:862",
+   "target": "fb698:868"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:876"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:863",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:864",
+   "target": "fb698:884"
+  },
+  {
+   "source": "fb698:864",
+   "target": "fb698:893"
+  },
+  {
+   "source": "fb698:865",
+   "target": "fb698:868"
+  },
+  {
+   "source": "fb698:866",
+   "target": "fb698:879"
+  },
+  {
+   "source": "fb698:866",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:866",
+   "target": "fb698:894"
+  },
+  {
+   "source": "fb698:866",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:872"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:873"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:874"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:877"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:867",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:869",
+   "target": "fb698:890"
+  },
+  {
+   "source": "fb698:870",
+   "target": "fb698:871"
+  },
+  {
+   "source": "fb698:870",
+   "target": "fb698:879"
+  },
+  {
+   "source": "fb698:870",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:870",
+   "target": "fb698:894"
+  },
+  {
+   "source": "fb698:870",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:871",
+   "target": "fb698:879"
+  },
+  {
+   "source": "fb698:871",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:871",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:872",
+   "target": "fb698:873"
+  },
+  {
+   "source": "fb698:872",
+   "target": "fb698:874"
+  },
+  {
+   "source": "fb698:872",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:872",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:873",
+   "target": "fb698:874"
+  },
+  {
+   "source": "fb698:873",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:874",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:874",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:876",
+   "target": "fb698:878"
+  },
+  {
+   "source": "fb698:876",
+   "target": "fb698:882"
+  },
+  {
+   "source": "fb698:876",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:876",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:876",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:877",
+   "target": "fb698:885"
+  },
+  {
+   "source": "fb698:878",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:878",
+   "target": "fb698:888"
+  },
+  {
+   "source": "fb698:878",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:879",
+   "target": "fb698:881"
+  },
+  {
+   "source": "fb698:879",
+   "target": "fb698:894"
+  },
+  {
+   "source": "fb698:881",
+   "target": "fb698:895"
+  },
+  {
+   "source": "fb698:882",
+   "target": "fb698:886"
+  },
+  {
+   "source": "fb698:882",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:884",
+   "target": "fb698:893"
+  },
+  {
+   "source": "fb698:885",
+   "target": "fb698:887"
+  },
+  {
+   "source": "fb698:886",
+   "target": "fb698:889"
+  },
+  {
+   "source": "fb698:888",
+   "target": "fb698:889"
+  }
+ ],
+ "metadata": {
+  "source": "snap_ego_facebook",
+  "dataset": "SNAP ego-Facebook",
+  "ego": "698",
+  "circles": {
+   "circle0": [
+    "fb698:828",
+    "fb698:830",
+    "fb698:708",
+    "fb698:713",
+    "fb698:840",
+    "fb698:803",
+    "fb698:747",
+    "fb698:774",
+    "fb698:823",
+    "fb698:745",
+    "fb698:856",
+    "fb698:697",
+    "fb698:719"
+   ],
+   "circle1": [
+    "fb698:882",
+    "fb698:863",
+    "fb698:888",
+    "fb698:753",
+    "fb698:729",
+    "fb698:864",
+    "fb698:884",
+    "fb698:878",
+    "fb698:825",
+    "fb698:876",
+    "fb698:886",
+    "fb698:889",
+    "fb698:856",
+    "fb698:875",
+    "fb698:893",
+    "fb698:804"
+   ],
+   "circle2": [
+    "fb698:828",
+    "fb698:708",
+    "fb698:880",
+    "fb698:800",
+    "fb698:772",
+    "fb698:840",
+    "fb698:774",
+    "fb698:823",
+    "fb698:810",
+    "fb698:745",
+    "fb698:856",
+    "fb698:697",
+    "fb698:805"
+   ],
+   "circle3": [
+    "fb698:882",
+    "fb698:863",
+    "fb698:888",
+    "fb698:729",
+    "fb698:878",
+    "fb698:876",
+    "fb698:886",
+    "fb698:889",
+    "fb698:856",
+    "fb698:875",
+    "fb698:804"
+   ],
+   "circle4": [
+    "fb698:774",
+    "fb698:856"
+   ],
+   "circle5": [
+    "fb698:879",
+    "fb698:870",
+    "fb698:858",
+    "fb698:871",
+    "fb698:881",
+    "fb698:866",
+    "fb698:895"
+   ],
+   "circle6": [
+    "fb698:862",
+    "fb698:776",
+    "fb698:857"
+   ],
+   "circle7": [
+    "fb698:876",
+    "fb698:889"
+   ],
+   "circle8": [
+    "fb698:872",
+    "fb698:867",
+    "fb698:776",
+    "fb698:877",
+    "fb698:874",
+    "fb698:873",
+    "fb698:887",
+    "fb698:885"
+   ],
+   "circle9": [
+    "fb698:697"
+   ],
+   "circle10": [
+    "fb698:862",
+    "fb698:868",
+    "fb698:871",
+    "fb698:865",
+    "fb698:860",
+    "fb698:810"
+   ],
+   "circle11": [
+    "fb698:747"
+   ],
+   "circle12": [
+    "fb698:883",
+    "fb698:860"
+   ]
+  }
+ }
+}

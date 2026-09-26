@@ -1,0 +1,127 @@
+{
+ "name": "Звезда: ловушка симметрии",
+ "nodes": [
+  {
+   "id": "0",
+   "label": "Центр",
+   "truth": "human"
+  },
+  {
+   "id": "1",
+   "label": "Вершина 1",
+   "truth": "human"
+  },
+  {
+   "id": "2",
+   "label": "Вершина 2",
+   "truth": "human"
+  },
+  {
+   "id": "3",
+   "label": "Вершина 3",
+   "truth": "human"
+  },
+  {
+   "id": "4",
+   "label": "Вершина 4",
+   "truth": "human"
+  },
+  {
+   "id": "5",
+   "label": "Вершина 5",
+   "truth": "human"
+  },
+  {
+   "id": "6",
+   "label": "Вершина 6",
+   "truth": "human"
+  },
+  {
+   "id": "7",
+   "label": "Вершина 7",
+   "truth": "human"
+  },
+  {
+   "id": "8",
+   "label": "Вершина 8",
+   "truth": "human"
+  },
+  {
+   "id": "9",
+   "label": "Вершина 9",
+   "truth": "human"
+  },
+  {
+   "id": "10",
+   "label": "Вершина 10",
+   "truth": "human"
+  },
+  {
+   "id": "11",
+   "label": "Вершина 11",
+   "truth": "human"
+  },
+  {
+   "id": "12",
+   "label": "Вершина 12",
+   "truth": "human"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1"
+  },
+  {
+   "source": "0",
+   "target": "2"
+  },
+  {
+   "source": "0",
+   "target": "3"
+  },
+  {
+   "source": "0",
+   "target": "4"
+  },
+  {
+   "source": "0",
+   "target": "5"
+  },
+  {
+   "source": "0",
+   "target": "6"
+  },
+  {
+   "source": "0",
+   "target": "7"
+  },
+  {
+   "source": "0",
+   "target": "8"
+  },
+  {
+   "source": "0",
+   "target": "9"
+  },
+  {
+   "source": "0",
+   "target": "10"
+  },
+  {
+   "source": "0",
+   "target": "11"
+  },
+  {
+   "source": "0",
+   "target": "12"
+  }
+ ],
+ "metadata": {
+  "source": "synthetic",
+  "synthetic": true,
+  "demo_id": "star",
+  "description": "Центр и 12 структурно эквивалентных листьев.",
+  "root": "0"
+ }
+}

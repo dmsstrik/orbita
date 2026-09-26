@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+data/projects/
+*.pyc
+.DS_Store
+test-results/
+tests/artifacts/
+node_modules/
+.env
+output/

@@ -1,0 +1,145 @@
+{
+ "name": "Асимметричный граф Фрухта",
+ "nodes": [
+  {
+   "id": "0",
+   "label": "Вершина 0",
+   "truth": "human"
+  },
+  {
+   "id": "1",
+   "label": "Вершина 1",
+   "truth": "human"
+  },
+  {
+   "id": "2",
+   "label": "Вершина 2",
+   "truth": "human"
+  },
+  {
+   "id": "3",
+   "label": "Вершина 3",
+   "truth": "human"
+  },
+  {
+   "id": "4",
+   "label": "Вершина 4",
+   "truth": "human"
+  },
+  {
+   "id": "5",
+   "label": "Вершина 5",
+   "truth": "human"
+  },
+  {
+   "id": "6",
+   "label": "Вершина 6",
+   "truth": "human"
+  },
+  {
+   "id": "7",
+   "label": "Вершина 7",
+   "truth": "human"
+  },
+  {
+   "id": "8",
+   "label": "Вершина 8",
+   "truth": "human"
+  },
+  {
+   "id": "9",
+   "label": "Вершина 9",
+   "truth": "human"
+  },
+  {
+   "id": "10",
+   "label": "Вершина 10",
+   "truth": "human"
+  },
+  {
+   "id": "11",
+   "label": "Вершина 11",
+   "truth": "human"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1"
+  },
+  {
+   "source": "0",
+   "target": "6"
+  },
+  {
+   "source": "0",
+   "target": "7"
+  },
+  {
+   "source": "1",
+   "target": "2"
+  },
+  {
+   "source": "1",
+   "target": "7"
+  },
+  {
+   "source": "2",
+   "target": "3"
+  },
+  {
+   "source": "2",
+   "target": "8"
+  },
+  {
+   "source": "3",
+   "target": "4"
+  },
+  {
+   "source": "3",
+   "target": "9"
+  },
+  {
+   "source": "4",
+   "target": "5"
+  },
+  {
+   "source": "4",
+   "target": "9"
+  },
+  {
+   "source": "5",
+   "target": "6"
+  },
+  {
+   "source": "10",
+   "target": "5"
+  },
+  {
+   "source": "10",
+   "target": "6"
+  },
+  {
+   "source": "11",
+   "target": "7"
+  },
+  {
+   "source": "11",
+   "target": "8"
+  },
+  {
+   "source": "8",
+   "target": "9"
+  },
+  {
+   "source": "10",
+   "target": "11"
+  }
+ ],
+ "metadata": {
+  "source": "synthetic",
+  "synthetic": true,
+  "demo_id": "asymmetric",
+  "description": "12 вершин одной степени и только тождественный автоморфизм; контроль различия между степенью и симметрией."
+ }
+}

@@ -1,0 +1,589 @@
+{
+ "name": "Шумная сеть с частичным клоном",
+ "root": "ego",
+ "nodes": [
+  {
+   "id": "clone_p",
+   "label": "Частичный клон u05",
+   "truth": "bot",
+   "clone_of": "u05"
+  },
+  {
+   "id": "ego",
+   "label": "Центральный аккаунт",
+   "truth": "human"
+  },
+  {
+   "id": "u01",
+   "truth": "human"
+  },
+  {
+   "id": "u02",
+   "truth": "human"
+  },
+  {
+   "id": "u03",
+   "truth": "human"
+  },
+  {
+   "id": "u04",
+   "truth": "human"
+  },
+  {
+   "id": "u05",
+   "truth": "human"
+  },
+  {
+   "id": "u06",
+   "truth": "human"
+  },
+  {
+   "id": "u07",
+   "truth": "human"
+  },
+  {
+   "id": "u08",
+   "truth": "human"
+  },
+  {
+   "id": "u09",
+   "truth": "human"
+  },
+  {
+   "id": "u10",
+   "truth": "human"
+  },
+  {
+   "id": "u11",
+   "truth": "human"
+  },
+  {
+   "id": "u12",
+   "truth": "human"
+  },
+  {
+   "id": "u13",
+   "truth": "human"
+  },
+  {
+   "id": "u14",
+   "truth": "human"
+  },
+  {
+   "id": "u15",
+   "truth": "human"
+  },
+  {
+   "id": "u16",
+   "truth": "human"
+  },
+  {
+   "id": "u17",
+   "truth": "human"
+  },
+  {
+   "id": "u18",
+   "truth": "human"
+  },
+  {
+   "id": "u19",
+   "truth": "human"
+  },
+  {
+   "id": "u20",
+   "truth": "human"
+  },
+  {
+   "id": "u21",
+   "truth": "human"
+  },
+  {
+   "id": "u22",
+   "truth": "human"
+  },
+  {
+   "id": "u23",
+   "truth": "human"
+  },
+  {
+   "id": "u24",
+   "truth": "human"
+  },
+  {
+   "id": "u25",
+   "truth": "human"
+  },
+  {
+   "id": "u26",
+   "truth": "human"
+  },
+  {
+   "id": "u27",
+   "truth": "human"
+  },
+  {
+   "id": "u28",
+   "truth": "human"
+  },
+  {
+   "id": "u29",
+   "truth": "human"
+  },
+  {
+   "id": "u30",
+   "truth": "human"
+  },
+  {
+   "id": "u31",
+   "truth": "human"
+  },
+  {
+   "id": "u32",
+   "truth": "human"
+  },
+  {
+   "id": "u33",
+   "truth": "human"
+  },
+  {
+   "id": "u34",
+   "truth": "human"
+  },
+  {
+   "id": "u35",
+   "truth": "human"
+  },
+  {
+   "id": "u36",
+   "truth": "human"
+  }
+ ],
+ "edges": [
+  {
+   "source": "clone_p",
+   "target": "u01"
+  },
+  {
+   "source": "clone_p",
+   "target": "u02"
+  },
+  {
+   "source": "clone_p",
+   "target": "u06"
+  },
+  {
+   "source": "clone_p",
+   "target": "u10"
+  },
+  {
+   "source": "clone_p",
+   "target": "u14"
+  },
+  {
+   "source": "clone_p",
+   "target": "u15"
+  },
+  {
+   "source": "clone_p",
+   "target": "u28"
+  },
+  {
+   "source": "ego",
+   "target": "u01"
+  },
+  {
+   "source": "ego",
+   "target": "u02"
+  },
+  {
+   "source": "ego",
+   "target": "u03"
+  },
+  {
+   "source": "ego",
+   "target": "u04"
+  },
+  {
+   "source": "ego",
+   "target": "u05"
+  },
+  {
+   "source": "ego",
+   "target": "u06"
+  },
+  {
+   "source": "ego",
+   "target": "u07"
+  },
+  {
+   "source": "ego",
+   "target": "u08"
+  },
+  {
+   "source": "ego",
+   "target": "u09"
+  },
+  {
+   "source": "ego",
+   "target": "u10"
+  },
+  {
+   "source": "ego",
+   "target": "u11"
+  },
+  {
+   "source": "ego",
+   "target": "u12"
+  },
+  {
+   "source": "ego",
+   "target": "u13"
+  },
+  {
+   "source": "ego",
+   "target": "u14"
+  },
+  {
+   "source": "ego",
+   "target": "u15"
+  },
+  {
+   "source": "ego",
+   "target": "u16"
+  },
+  {
+   "source": "ego",
+   "target": "u17"
+  },
+  {
+   "source": "ego",
+   "target": "u18"
+  },
+  {
+   "source": "ego",
+   "target": "u19"
+  },
+  {
+   "source": "ego",
+   "target": "u20"
+  },
+  {
+   "source": "ego",
+   "target": "u21"
+  },
+  {
+   "source": "ego",
+   "target": "u22"
+  },
+  {
+   "source": "ego",
+   "target": "u23"
+  },
+  {
+   "source": "ego",
+   "target": "u24"
+  },
+  {
+   "source": "ego",
+   "target": "u25"
+  },
+  {
+   "source": "ego",
+   "target": "u26"
+  },
+  {
+   "source": "ego",
+   "target": "u27"
+  },
+  {
+   "source": "ego",
+   "target": "u28"
+  },
+  {
+   "source": "ego",
+   "target": "u29"
+  },
+  {
+   "source": "ego",
+   "target": "u30"
+  },
+  {
+   "source": "ego",
+   "target": "u31"
+  },
+  {
+   "source": "ego",
+   "target": "u32"
+  },
+  {
+   "source": "ego",
+   "target": "u33"
+  },
+  {
+   "source": "ego",
+   "target": "u34"
+  },
+  {
+   "source": "ego",
+   "target": "u35"
+  },
+  {
+   "source": "ego",
+   "target": "u36"
+  },
+  {
+   "source": "u01",
+   "target": "u02"
+  },
+  {
+   "source": "u01",
+   "target": "u04"
+  },
+  {
+   "source": "u01",
+   "target": "u05"
+  },
+  {
+   "source": "u01",
+   "target": "u07"
+  },
+  {
+   "source": "u01",
+   "target": "u12"
+  },
+  {
+   "source": "u02",
+   "target": "u03"
+  },
+  {
+   "source": "u02",
+   "target": "u05"
+  },
+  {
+   "source": "u02",
+   "target": "u08"
+  },
+  {
+   "source": "u03",
+   "target": "u04"
+  },
+  {
+   "source": "u03",
+   "target": "u19"
+  },
+  {
+   "source": "u04",
+   "target": "u05"
+  },
+  {
+   "source": "u04",
+   "target": "u11"
+  },
+  {
+   "source": "u05",
+   "target": "u06"
+  },
+  {
+   "source": "u05",
+   "target": "u10"
+  },
+  {
+   "source": "u05",
+   "target": "u14"
+  },
+  {
+   "source": "u06",
+   "target": "u07"
+  },
+  {
+   "source": "u06",
+   "target": "u08"
+  },
+  {
+   "source": "u07",
+   "target": "u08"
+  },
+  {
+   "source": "u08",
+   "target": "u09"
+  },
+  {
+   "source": "u09",
+   "target": "u10"
+  },
+  {
+   "source": "u09",
+   "target": "u27"
+  },
+  {
+   "source": "u10",
+   "target": "u11"
+  },
+  {
+   "source": "u11",
+   "target": "u12"
+  },
+  {
+   "source": "u13",
+   "target": "u14"
+  },
+  {
+   "source": "u13",
+   "target": "u17"
+  },
+  {
+   "source": "u13",
+   "target": "u22"
+  },
+  {
+   "source": "u13",
+   "target": "u24"
+  },
+  {
+   "source": "u14",
+   "target": "u15"
+  },
+  {
+   "source": "u15",
+   "target": "u16"
+  },
+  {
+   "source": "u15",
+   "target": "u21"
+  },
+  {
+   "source": "u16",
+   "target": "u17"
+  },
+  {
+   "source": "u16",
+   "target": "u22"
+  },
+  {
+   "source": "u17",
+   "target": "u18"
+  },
+  {
+   "source": "u17",
+   "target": "u30"
+  },
+  {
+   "source": "u18",
+   "target": "u19"
+  },
+  {
+   "source": "u19",
+   "target": "u20"
+  },
+  {
+   "source": "u20",
+   "target": "u21"
+  },
+  {
+   "source": "u21",
+   "target": "u22"
+  },
+  {
+   "source": "u22",
+   "target": "u23"
+  },
+  {
+   "source": "u22",
+   "target": "u33"
+  },
+  {
+   "source": "u23",
+   "target": "u24"
+  },
+  {
+   "source": "u25",
+   "target": "u26"
+  },
+  {
+   "source": "u25",
+   "target": "u35"
+  },
+  {
+   "source": "u25",
+   "target": "u36"
+  },
+  {
+   "source": "u26",
+   "target": "u27"
+  },
+  {
+   "source": "u26",
+   "target": "u32"
+  },
+  {
+   "source": "u26",
+   "target": "u33"
+  },
+  {
+   "source": "u27",
+   "target": "u28"
+  },
+  {
+   "source": "u27",
+   "target": "u36"
+  },
+  {
+   "source": "u28",
+   "target": "u29"
+  },
+  {
+   "source": "u29",
+   "target": "u30"
+  },
+  {
+   "source": "u30",
+   "target": "u31"
+  },
+  {
+   "source": "u30",
+   "target": "u36"
+  },
+  {
+   "source": "u31",
+   "target": "u32"
+  },
+  {
+   "source": "u31",
+   "target": "u35"
+  },
+  {
+   "source": "u32",
+   "target": "u33"
+  },
+  {
+   "source": "u32",
+   "target": "u34"
+  },
+  {
+   "source": "u32",
+   "target": "u35"
+  },
+  {
+   "source": "u33",
+   "target": "u34"
+  },
+  {
+   "source": "u34",
+   "target": "u35"
+  },
+  {
+   "source": "u35",
+   "target": "u36"
+  }
+ ],
+ "metadata": {
+  "source": "synthetic",
+  "synthetic": true,
+  "demo_id": "noisy",
+  "root": "ego",
+  "description": "38 аккаунтов, три сообщества с разной плотностью, мостовые связи, один частичный клон u05 (5 из 6 связей скопированы, одна потеряна, две добавлены); контрольная разметка.",
+  "planted_clones": {
+   "clone_p": "u05"
+  }
+ }
+}

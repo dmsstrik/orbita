@@ -1,0 +1,142 @@
+/* Optional end-to-end check. Start the app first, then run with Playwright installed:
+   node tests/browser-smoke.cjs
+   ORBITA_PLAYWRIGHT may point to an existing Playwright package. */
+const { chromium } = require(process.env.ORBITA_PLAYWRIGHT || 'playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const artifacts = path.join(__dirname, 'artifacts');
+const origin = process.env.ORBITA_URL || 'http://127.0.0.1:8787';
+
+(async () => {
+  await fs.mkdir(artifacts, { recursive: true });
+  const browser = await chromium.launch({ headless: true, ...(process.env.ORBITA_CHROME ? { executablePath: process.env.ORBITA_CHROME } : {}) });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  page.setDefaultTimeout(20000);
+  const errors = [];
+  let savedId;
+  page.on('pageerror', e => errors.push(e.message));
+  const ready = () => page.locator('#workspace[aria-busy="false"]').waitFor({ timeout: 150000 });
+  const nav = async name => { await page.locator(`.nav-items [data-view="${name}"]`).click(); await ready(); };
+  const action = name => page.locator(`[data-action="${name}"]`).first();
+  const download = async name => {
+    const pending = page.waitForEvent('download');
+    await action(`export-${name}`).click();
+    const item = await pending;
+    const out = path.join(artifacts, item.suggestedFilename());
+    await item.saveAs(out);
+    await ready();
+    return fs.readFile(out, 'utf8');
+  };
+  try {
+    await page.goto(origin);
+    await ready();
+    assert.equal(await page.locator('.graph-node').count(), 34);
+    assert.equal(await page.locator('tr[data-pair]').count(), 2);
+    await page.screenshot({ path: path.join(artifacts, 'desktop-graph.png'), fullPage: true });
+    await action('zoom-in').click();
+    assert.notEqual(await page.locator('#zoom-level').innerText(), '100%');
+    await action('fit-graph').click();
+    const node = page.locator('.graph-node[data-node="ego"]');
+    await node.focus();
+    await node.press('Enter');
+    assert.equal(await node.getAttribute('aria-pressed'), 'true');
+    await page.locator('#radius-select').selectOption('2');
+    assert.equal(await page.locator('.graph-stale').count(), 1);
+    await action('analyze').click();
+    await ready();
+    assert.equal(await page.locator('.graph-stale').count(), 0);
+    const subgraph = JSON.parse(await download('subgraph'));
+    assert.equal(subgraph.nodes.length, 34);
+    await nav('candidates');
+    await page.locator('tr[data-pair]').first().click();
+    assert.equal(await page.locator('tr[data-pair].selected').count(), 1);
+    await page.locator('#pair-search').fill('no-such-user-987654');
+    assert.equal(await page.locator('tr[data-pair]').count(), 0);
+    await page.locator('#pair-search').fill('');
+    assert.equal(await page.locator('tr[data-pair]').count(), 2);
+    await page.locator('[data-action="sort-pairs"][data-sort="jaccard"]').click();
+    const csv = await download('csv');
+    assert.ok(csv.includes('source') && csv.split('\n').length >= 3);
+    const report = await download('html');
+    assert.ok(report.includes('<svg') && report.includes('Орбита'));
+    const reportPage = await browser.newPage({ viewport: { width: 1200, height: 900 } });
+    await reportPage.setContent(report);
+    assert.ok(await reportPage.locator('svg circle').count() >= 34);
+    assert.ok(await reportPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await reportPage.screenshot({ path: path.join(artifacts, 'html-report.png'), fullPage: true });
+    await reportPage.close();
+    await page.screenshot({ path: path.join(artifacts, 'desktop-candidates.png'), fullPage: true });
+
+    await nav('experiments');
+    await page.locator('#exp-repeats').fill('1');
+    await page.locator('#exp-repeats').press('Tab');
+    await page.locator('#exp-noise').fill('0; 0.15');
+    await page.locator('#exp-noise').press('Tab');
+    await action('run-experiments').click();
+    await ready();
+    assert.ok(await page.locator('#experiment-chart circle').count() >= 3);
+    assert.equal(await page.locator('.experiment-table tbody tr').count() || await page.locator('.table tbody tr').count(), 6);
+    await page.screenshot({ path: path.join(artifacts, 'desktop-experiments.png'), fullPage: true });
+    await page.locator('[data-action="exp-tab"][data-tab="control"]').click();
+    assert.ok((await page.locator('#workspace').innerText()).includes('Контроль'));
+    const expCsv = await download('experiments');
+    assert.ok(expCsv.includes('neighbors') && expCsv.includes('combined'));
+
+    await page.locator('#save-project').click();
+    await page.locator('#project-name').fill('Автопроверка интерфейса');
+    const saved = page.waitForResponse(r => r.url() === origin + '/api/projects' && r.request().method() === 'POST');
+    await page.locator('#save-form button[type="submit"]').click();
+    const savedResponse = await saved;
+    assert.equal(savedResponse.status(), 200);
+    savedId = (await savedResponse.json()).id;
+    await ready();
+    await nav('data');
+    const source = JSON.parse(await download('json'));
+    assert.equal(source.nodes.length, 35);
+    await page.locator('[data-action="load-demo"][data-demo="star"]').click();
+    await ready();
+    assert.equal(await page.locator('tr[data-pair]').count(), 0);
+    await nav('data');
+    await page.locator(`[data-action="load-project"][data-project="${savedId}"]`).click();
+    await ready();
+    assert.equal(await page.locator('tr[data-pair]').count(), 2);
+    await nav('experiments');
+    assert.ok(await page.locator('#experiment-chart').count());
+    await nav('data');
+    await page.locator(`[data-action="delete-project"][data-project="${savedId}"]`).click();
+    await action('confirm-delete-project').click();
+    await ready();
+    assert.equal(await page.locator(`[data-action="load-project"][data-project="${savedId}"]`).count(), 0);
+    savedId = null;
+
+    await page.locator('#graph-file').setInputFiles(path.join(root, 'examples/social.json'));
+    await ready();
+    await nav('data');
+    await page.locator('#labels-file').setInputFiles(path.join(root, 'examples/labels.csv'));
+    await ready();
+    await action('analyze-open').click();
+    await ready();
+    await nav('data');
+    await page.locator('#graph-file').setInputFiles({ name: 'broken.json', mimeType: 'application/json', buffer: Buffer.from('{broken') });
+    await ready();
+    assert.ok(await page.locator('.toast.error').count());
+    await page.locator('#graph-file').setInputFiles(path.join(root, 'examples/social.csv'));
+    await ready();
+    assert.ok(await page.locator('.graph-node').count() > 0);
+    await action('methodology').click();
+    await page.locator('.modal').waitFor();
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.modal').count(), 0);
+    assert.deepEqual(errors, []);
+    console.log('PASS: demo, graph controls, candidates, exports, experiments, save/load/delete, imports, labels, recovery, methodology; no browser errors.');
+  } catch (error) {
+    await page.screenshot({ path: path.join(artifacts, 'failure.png'), fullPage: true });
+    console.error('Visible errors:', await page.locator('.toast.error').allTextContents());
+    throw error;
+  } finally {
+    if (savedId) await page.request.delete(`${origin}/api/projects/${savedId}`);
+    await browser.close();
+  }
+})().catch(error => { console.error(error); process.exitCode = 1; });
