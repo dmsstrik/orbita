@@ -6,6 +6,6 @@ if [ ! -x .venv/bin/python ]; then
 fi
 if ! .venv/bin/python -c 'import fastapi, uvicorn, networkx, pynauty, numpy, httpx' >/dev/null 2>&1; then
   echo "Устанавливаю зависимости Орбиты…"
-  .venv/bin/python -m pip install -r requirements.txt
+  .venv/bin/python -m pip install -e .
 fi
 exec .venv/bin/python run.py "$@"

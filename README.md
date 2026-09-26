@@ -34,7 +34,7 @@ docker compose up --build
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install -e .
 .venv/bin/python run.py
 ```
 
@@ -64,7 +64,7 @@ python3 -m venv .venv
 ## Проверка
 
 ```bash
-.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m pip install -e ".[dev]"
 .venv/bin/python -m pytest          # 142 теста
 ```
 

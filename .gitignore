@@ -9,3 +9,5 @@ tests/artifacts/
 node_modules/
 .env
 output/
+*.egg-info/
+build/

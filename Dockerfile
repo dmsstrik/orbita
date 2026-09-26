@@ -6,10 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY pyproject.toml ./
 COPY app ./app
+RUN pip install --no-cache-dir .
+
 COPY static ./static
 COPY run.py ./
 
