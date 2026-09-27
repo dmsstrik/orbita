@@ -43,6 +43,20 @@ def test_import_and_real_worker_analysis(client, graph):
     assert data["pairs"][0]["target"] == "b"
 
 
+def test_large_source_is_accepted_but_api_requires_a_local_scope(client):
+    graph = {
+        "name": "Большой путь",
+        "nodes": [{"id": str(index)} for index in range(10_001)],
+        "edges": [{"source": str(index), "target": str(index + 1)} for index in range(10_000)],
+    }
+    whole = client.post("/api/analyze", json={"graph": graph})
+    assert whole.status_code == 422
+    assert "выберите центр" in whole.text
+    local = client.post("/api/analyze", json={"graph": graph, "options": {"root": "0", "radius": 2}})
+    assert local.status_code == 200, local.text
+    assert local.json()["summary"]["node_count"] == 3
+
+
 def test_vk_validation_errors_are_actionable(client):
     response = client.post("/api/vk", json={"user_id": "1", "max_friends": 999999})
     assert response.status_code == 422

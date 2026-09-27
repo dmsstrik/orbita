@@ -13,11 +13,13 @@ from time import perf_counter
 import networkx as nx
 
 from .analysis import (
-    MAX_EDGES, MAX_NODES, _automorphism_state, _bounded_integer,
-    _bounded_number, _metrics, _neighborhoods, _prepare_graph,
+    _automorphism_state, _bounded_integer, _bounded_number, _metrics,
+    _neighborhoods, _prepare_graph,
 )
 
 METHODS = ("neighbors", "symmetry", "combined")
+MAX_EXPERIMENT_NODES = 2_000
+MAX_EXPERIMENT_EDGES = 100_000
 EXPERIMENT_CONVENTIONS = {
     "target": "Положительны только пары внедрённый клон–его исходная вершина и клоны одного источника. Остальные пары отрицательны только для этой синтетической задачи, а не как реальные люди или боты.",
     "neighbors": "Обычный Jaccard открытых окрестностей J; кандидат при J≥threshold и J>0.",
@@ -76,7 +78,7 @@ def _serialize_graph(graph: dict, nx_graph: nx.Graph) -> dict:
 
 
 def _inject_clones(graph: dict, nx_graph: nx.Graph, config: dict, rng: random.Random) -> tuple[dict, nx.Graph, set[tuple[str, str]]]:
-    if len(nx_graph) + config["clone_count"] > MAX_NODES:
+    if len(nx_graph) + config["clone_count"] > MAX_EXPERIMENT_NODES:
         raise ValueError("Для внедрения клонов не хватает места: после добавления должно остаться не более 2000 вершин.")
     result = deepcopy(graph)
     for node in result["nodes"]:
@@ -101,8 +103,8 @@ def _inject_clones(graph: dict, nx_graph: nx.Graph, config: dict, rng: random.Ra
                   if neighbor == config["root"] or rng.random() < config["retention"]]
         generated.add_node(identifier)
         generated.add_edges_from((identifier, neighbor) for neighbor in copied)
-        if generated.number_of_edges() > MAX_EDGES:
-            raise ValueError("Внедрение превышает ограничение 20000 рёбер; уменьшите граф или число клонов.")
+        if generated.number_of_edges() > MAX_EXPERIMENT_EDGES:
+            raise ValueError("Внедрение превышает ограничение 100000 рёбер; уменьшите граф или число клонов.")
         result["nodes"].append({"id": identifier, "label": f"Синтетический клон {index + 1} ← {origin}"[:160],
                                 "truth": "unknown", "clone_of": origin})
         families[origin].append(identifier)
@@ -174,6 +176,10 @@ def _evaluate_methods(nx_graph: nx.Graph, positives: set[tuple[str, str]], confi
 def run_experiments(graph: dict, config: dict | None = None) -> dict:
     config = _read_config(config)
     base, nx_graph = _prepare_graph(graph, config["root"], radius=None)
+    if len(nx_graph) + config["clone_count"] > MAX_EXPERIMENT_NODES:
+        raise ValueError("После добавления клонов граф должен содержать не более 2000 вершин.")
+    if nx_graph.number_of_edges() > MAX_EXPERIMENT_EDGES:
+        raise ValueError("Экспериментальный граф должен содержать не более 100000 рёбер.")
     warnings = list(base.get("metadata", {}).get("warnings", []))
     if config["root"] is not None:
         warnings.append("Корень фиксирован; связи с корнем сохраняются при внедрении и не изменяются шумом.")

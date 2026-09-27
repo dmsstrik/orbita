@@ -5,10 +5,15 @@ from __future__ import annotations
 import json
 import math
 
-from .ingest import MAX_EDGES, MAX_NODES, normalize_graph
+from .analysis import MAX_EDGES, MAX_NODES, MAX_RETURNED_PAIRS
+from .ingest import normalize_graph
 
 MAX_ARTIFACT_BYTES = 40 * 1024 * 1024
-MAX_PAIRS = 20_000
+MAX_PAIRS = MAX_RETURNED_PAIRS
+MAX_POSSIBLE_PAIRS = MAX_NODES * (MAX_NODES - 1) // 2
+MAX_EXPERIMENT_NODES = 2_000
+MAX_EXPERIMENT_EDGES = 100_000
+MAX_EXPERIMENT_PAIRS = MAX_EXPERIMENT_NODES * (MAX_EXPERIMENT_NODES - 1) // 2
 METHODS = {"neighbors", "symmetry", "combined"}
 
 
@@ -92,7 +97,7 @@ def validate_options_artifact(data, ids=None):
     if "exclude_root" in result:
         _bool(result["exclude_root"], "options.exclude_root")
     if "max_pairs" in result:
-        _integer(result["max_pairs"], "options.max_pairs", 0, 1_998_000)
+        _integer(result["max_pairs"], "options.max_pairs", 0, MAX_PAIRS)
     if "layout_seed" in result:
         _integer(result["layout_seed"], "options.layout_seed", 0, 2**32 - 1)
     if "layout_method_actual" in result:
@@ -133,8 +138,13 @@ def validate_analysis_artifact(data: dict) -> dict:
     summary = _object(result.get("summary"), "analysis.summary")
     for key, maximum in (("node_count", MAX_NODES), ("edge_count", MAX_EDGES),
                          ("component_count", MAX_NODES), ("orbit_count", MAX_NODES),
-                         ("nontrivial_orbits", MAX_NODES), ("candidate_count", 1_998_000)):
+                         ("nontrivial_orbits", MAX_NODES), ("candidate_count", MAX_POSSIBLE_PAIRS)):
         _integer(summary.get(key), f"analysis.summary.{key}", 0, maximum)
+    for key, maximum in (("eligible_node_count", MAX_NODES),
+                         ("possible_pair_count", MAX_POSSIBLE_PAIRS),
+                         ("scored_pair_count", MAX_POSSIBLE_PAIRS)):
+        if key in summary:
+            _integer(summary[key], f"analysis.summary.{key}", 0, maximum)
     _number(summary.get("density"), "analysis.summary.density")
     _number(summary.get("elapsed_ms"), "analysis.summary.elapsed_ms", high=86_400_000)
     _string(summary.get("group_order"), "analysis.summary.group_order", 256, 1)
@@ -147,8 +157,23 @@ def validate_analysis_artifact(data: dict) -> dict:
     for field, maximum in (("average_degree", MAX_NODES - 1), ("group_order_mantissa", 1e308)):
         if field in summary:
             _number(summary[field], f"analysis.summary.{field}", high=maximum)
+    for field in ("candidate_score_min", "candidate_score_max"):
+        if field in summary:
+            _number(summary[field], f"analysis.summary.{field}", high=1, nullable=True)
+    if (summary.get("candidate_score_min") is not None and summary.get("candidate_score_max") is not None
+            and summary["candidate_score_min"] > summary["candidate_score_max"]):
+        _error("analysis.summary", "минимальная оценка кандидата больше максимальной")
     if summary["node_count"] != len(ids) or summary["edge_count"] != len(graph["edges"]):
         _error("analysis.summary", "число вершин или рёбер не соответствует графу")
+    expected_eligible = len(ids) - int(options.get("root") is not None)
+    if "eligible_node_count" in summary and summary["eligible_node_count"] != expected_eligible:
+        _error("analysis.summary.eligible_node_count", "не соответствует области анализа и корню")
+    expected_pairs = expected_eligible * (expected_eligible - 1) // 2
+    if "possible_pair_count" in summary and summary["possible_pair_count"] != expected_pairs:
+        _error("analysis.summary.possible_pair_count", "не соответствует числу допустимых вершин")
+    if "scored_pair_count" in summary:
+        if summary["scored_pair_count"] > expected_pairs or summary["candidate_count"] > summary["scored_pair_count"]:
+            _error("analysis.summary.scored_pair_count", "не согласуется с числом возможных пар или кандидатов")
     orbits = _array(result.get("orbits"), "analysis.orbits", MAX_NODES, 1)
     partition, orbit_ids, orbit_nodes = set(), set(), {}
     for orbit in orbits:
@@ -241,10 +266,13 @@ def validate_experiment_artifact(data: dict) -> dict:
             _error("experiments.rows.method", "неизвестный метод")
         _metrics(row, "experiments.rows")
         _number(row.get("elapsed_ms"), "experiments.rows.elapsed_ms", high=86_400_000)
-        for field, maximum in (("node_count", MAX_NODES), ("edge_count", MAX_EDGES),
-                               ("candidate_count", 1_998_000), ("actual_positive_pairs", 1_998_000),
-                               ("evaluated_pair_count", 1_998_000), ("deleted_edges", MAX_EDGES),
-                               ("added_edges", MAX_EDGES), ("requested_each", MAX_EDGES)):
+        for field, maximum in (("node_count", MAX_EXPERIMENT_NODES), ("edge_count", MAX_EXPERIMENT_EDGES),
+                               ("candidate_count", MAX_EXPERIMENT_PAIRS),
+                               ("actual_positive_pairs", MAX_EXPERIMENT_PAIRS),
+                               ("evaluated_pair_count", MAX_EXPERIMENT_PAIRS),
+                               ("deleted_edges", MAX_EXPERIMENT_EDGES),
+                               ("added_edges", MAX_EXPERIMENT_EDGES),
+                               ("requested_each", MAX_EXPERIMENT_EDGES)):
             if field in row:
                 _integer(row[field], f"experiments.rows.{field}", 0, maximum)
         if "graph_fingerprint" in row:

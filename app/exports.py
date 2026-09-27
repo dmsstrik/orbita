@@ -142,14 +142,28 @@ def html_report(analysis: dict, experiments: dict | None = None) -> str:
         exp_rows = "".join(f'<tr><td>{"Контроль" if row.get("control") else _num(row.get("noise"))}</td><td>{_e(row.get("repeat", ""))}</td><td>{_e(METHODS.get(row.get("method"), row.get("method")))}</td><td>{_num(row.get("precision"))}</td><td>{_num(row.get("recall"))}</td><td>{_num(row.get("f1"))}</td><td>{_num(row.get("fp"), 0)}</td></tr>' for row in experiments.get("rows", []))
         exp_warnings = "".join(f"<li>{_e(w)}</li>" for w in experiments.get("warnings", []))
         experiment_html = f'<section><h2>Эксперименты</h2><ul>{exp_warnings}</ul><pre>{_e(json.dumps(experiments.get("config", {}), ensure_ascii=False, indent=2))}</pre><table><thead><tr><th>Шум</th><th>Повтор</th><th>Метод</th><th>Precision</th><th>Recall</th><th>F1</th><th>FP</th></tr></thead><tbody>{exp_rows}</tbody></table></section>'
+    graph_preview_note = "Цвет обозначает орбиту; при большом числе орбит цвета повторяются. Центральная вершина выделена обводкой."
+    if len(graph["nodes"]) > 2000:
+        graph_preview_note += f" Карта отчёта показывает первые 2000 из {len(graph['nodes'])} вершин; сводка, орбиты и таблица рассчитаны по всей области."
+    coverage_html = ""
+    if summary.get("possible_pair_count") is not None:
+        coverage_html = (
+            f" Охвачено возможных пар: {_e(summary['possible_pair_count'])}; "
+            f"подробно рассчитано после точного предварительного правила: {_e(summary.get('scored_pair_count', '—'))}."
+        )
+    if summary.get("candidate_score_min") is not None:
+        coverage_html += (
+            f" Диапазон итоговой оценки кандидатов: {_num(summary['candidate_score_min'], 2)}–"
+            f"{_num(summary['candidate_score_max'], 2)}."
+        )
     return f'''<!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Орбита — {title}</title>
 <style>
 *{{box-sizing:border-box}}body{{margin:0;background:#f6f5f0;color:#193338;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}main{{max-width:1100px;margin:40px auto;padding:42px;background:white;border-radius:22px}}header{{border-bottom:2px solid #e66c37;padding-bottom:28px}}.brand{{font-weight:800;letter-spacing:.2em;color:#087f8c}}h1{{font-size:34px;line-height:1.2;margin:16px 0}}h2{{font-size:22px;margin:0 0 16px}}h3{{font-size:17px}}.muted{{color:#667a7d}}.cards{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}}.card{{padding:16px;background:#f6f5f0;border-radius:12px}}.card span{{display:block;color:#667a7d;font-size:12px}}.card strong{{font-size:25px;word-break:break-word}}section{{margin-top:36px}}table{{width:100%;border-collapse:collapse;font-size:12px}}th,td{{text-align:left;vertical-align:top;border-bottom:1px solid #dee6e4;padding:9px;overflow-wrap:anywhere}}th{{background:#eef3f1}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f5f0;padding:18px;font-size:12px;border-radius:10px}}svg{{width:100%;height:auto}}.note{{border-left:3px solid #e66c37;padding:12px 18px;background:#fff5ec}}li{{margin:8px 0}}footer{{margin-top:40px;border-top:1px solid #dee6e4;padding-top:20px;font-size:12px;color:#667a7d}}@media print{{body{{background:white}}main{{margin:0;padding:0;max-width:none}}section{{break-inside:auto}}tr,.card{{break-inside:avoid}}thead{{display:table-header-group}}}}@media(max-width:650px){{main{{margin:0;padding:20px}}.cards{{grid-template-columns:repeat(2,1fr)}}}}
 </style></head><body><main><header><div class="brand">ОРБИТА / ИССЛЕДОВАНИЕ</div><h1>{title}</h1><div class="muted">Отчёт по структурному анализу · {date} · версия {__version__}</div></header>
 <div class="cards">{card_html}</div>
-<section><h2>Граф и орбиты</h2>{_graph_svg(graph, options.get('root'))}<p class="muted">Цвет обозначает орбиту; при большом числе орбит цвета повторяются. Центральная вершина выделена обводкой.</p><table><thead><tr><th>Орбита</th><th>Размер</th><th>Вершины</th></tr></thead><tbody>{orbit_rows}</tbody></table></section>
-<section><h2>Пары кандидатов</h2><p>В таблице: {len(pairs)}; всего по правилу: {_e(summary.get('candidate_count', len(pairs)))}. Ограничение выдачи не меняет число найденных пар и метрики.</p><table><thead><tr><th>Аккаунт A</th><th>Аккаунт B</th><th>Оценка</th><th>Одна орбита</th><th>Жаккар</th><th>Общие соседи</th><th>Причины</th></tr></thead><tbody>{table_rows or '<tr><td colspan="7">Нет пар, удовлетворяющих выбранному правилу.</td></tr>'}</tbody></table></section>
+<section><h2>Граф и орбиты</h2>{_graph_svg(graph, options.get('root'))}<p class="muted">{_e(graph_preview_note)}</p><table><thead><tr><th>Орбита</th><th>Размер</th><th>Вершины</th></tr></thead><tbody>{orbit_rows}</tbody></table></section>
+<section><h2>Пары кандидатов</h2><p>В таблице: {len(pairs)}; всего по правилу: {_e(summary.get('candidate_count', len(pairs)))}.{coverage_html} Ограничение выдачи не меняет число найденных пар и метрики.</p><table><thead><tr><th>Аккаунт A</th><th>Аккаунт B</th><th>Оценка</th><th>Одна орбита</th><th>Жаккар</th><th>Общие соседи</th><th>Причины</th></tr></thead><tbody>{table_rows or '<tr><td colspan="7">Нет пар, удовлетворяющих выбранному правилу.</td></tr>'}</tbody></table></section>
 <section><h2>Оценка по разметке</h2>{evaluation_html}</section>
 <section><h2>Методика</h2><ul>{method_html}</ul><h3>Замечания к данным</h3><ul>{warning_html}</ul><h3>Параметры</h3><pre>{_e(json.dumps(options, ensure_ascii=False, indent=2))}</pre><h3>Происхождение данных</h3><pre>{_e(json.dumps(graph.get('metadata', {}), ensure_ascii=False, indent=2))}</pre></section>
 {experiment_html}<footer>Орбита · локальная лаборатория социальных графов. Отчёт автономен и не загружает внешние ресурсы. Для воспроизведения сохраните также исходный JSON-граф и параметры.</footer></main></body></html>'''

@@ -46,8 +46,18 @@ const state = {
   selectedPair:null, selectedNode:null, selectedOrbit:null, nodeQuery:'', pairQuery:'', pairMode:'all',
   pairSort:'score', pairSortDir:-1, pairPage:0, pageSize:20, busy:null, projectId:null, projectName:'',
   vkUser:'', vkLimit:40, importName:'', error:null, graphRevision:0, experimentTab:'summary', modalReturn:null,
+  graphScope:'analysis', autoScoped:false,
 };
-const graphView = {graph:null, positions:new Map(), tx:0, ty:0, zoom:1, drag:null, svg:null, height:700, layoutHeight:0};
+const graphView = {
+  graph:null, positions:new Map(), tx:0, ty:0, zoom:1, drag:null, svg:null, height:700, layoutHeight:0,
+  degree:new Map(), adjacency:new Map(), nodeById:new Map(), spatial:new Map(), spatialCell:260,
+  renderFrame:null, renderedNodes:new Set(), renderedEdges:0,
+};
+const ANALYSIS_NODE_LIMIT = 10000;
+const ANALYSIS_EDGE_LIMIT = 500000;
+const MAX_RENDERED_NODES = 900;
+const MAX_RENDERED_EDGES = 3500;
+const MIN_GRAPH_ZOOM = .04;
 const orbitPalette = ['#578b77','#a2b58a','#eab061','#83a9a0','#d38d6b','#aca1bd','#8dabc0','#c4c193','#729e91','#b09e7e'];
 const methodNames = {neighbors:'Сходство соседей', symmetry:'Симметрии', combined:'Комбинация'};
 const methodColors = {neighbors:'#84a297', symmetry:'#c1ad8d', combined:'#ed6b35'};
@@ -103,7 +113,7 @@ async function task(label, fn) {
   finally { state.busy = null; updateBusy(); }
 }
 const lock = (unavailable = false) => `data-lock data-unavailable="${unavailable}" ${state.busy || unavailable ? 'disabled' : ''}`;
-const displayedGraph = () => state.analysis?.graph || state.graph;
+const displayedGraph = () => state.graphScope === 'source' || !state.analysis ? state.graph : state.analysis.graph;
 const graphNodeMaps = new WeakMap();
 function nodeMap() {
   const graph = displayedGraph();
@@ -154,8 +164,21 @@ function acceptGraph(graph, {demoId = null, projectId = null, projectName = ''} 
   state.nodeQuery = ''; state.pairQuery = ''; state.pairPage = 0; state.graphRevision++;
   const ids = new Set(graph.nodes.map(n => String(n.id)));
   const suggested = graph.metadata?.root == null ? null : String(graph.metadata.root);
-  state.options.root = suggested && ids.has(suggested) ? suggested : null;
-  state.options.radius = 1;
+  const large = graph.nodes.length > ANALYSIS_NODE_LIMIT || graph.edges.length > ANALYSIS_EDGE_LIMIT;
+  let root = suggested && ids.has(suggested) ? suggested : null;
+  if (!root && large) {
+    const degree = new Map(graph.nodes.map(node => [String(node.id), 0]));
+    graph.edges.forEach(edge => {
+      const source=String(edge.source),target=String(edge.target);
+      degree.set(source,(degree.get(source)||0)+1);degree.set(target,(degree.get(target)||0)+1);
+    });
+    root = [...degree].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]))[0]?.[0] || null;
+  }
+  state.options.root = root;
+  const suggestedRadius=Number(graph.metadata?.recommended_radius);
+  state.options.radius = [1,2,3].includes(suggestedRadius) ? suggestedRadius : 1;
+  state.graphScope = 'analysis';
+  state.autoScoped = large && !suggested;
   graphView.graph = null;
 }
 function invalidateAnalysis() {
@@ -166,7 +189,8 @@ function invalidateAnalysis() {
 async function analyzeCurrent() {
   if (!state.graph) return;
   const result = await api('/api/analyze', {body:{graph:state.graph, options:{...state.options}}, timeout:130000});
-  state.analysis = result; state.selectedPair = null; state.selectedNode = null; state.selectedOrbit = null;
+  state.analysis = result; state.graphScope = 'analysis';
+  state.selectedPair = null; state.selectedNode = null; state.selectedOrbit = null;
   state.pairPage = 0; graphView.graph = null; render();
 }
 async function loadDemo(id, goToGraph = true) {
@@ -192,18 +216,45 @@ function statsHTML() {
 }
 function analysisControls() {
   const nodes = state.graph?.nodes || [];
+  const wholeGraphUnavailable = nodes.length > ANALYSIS_NODE_LIMIT || (state.graph?.edges.length || 0) > ANALYSIS_EDGE_LIMIT;
+  const largeRootInput = nodes.length > 2000;
+  const rootControl = largeRootInput
+    ? `<input class="input" id="root-select" value="${esc(state.options.root || '')}" placeholder="${wholeGraphUnavailable ? 'Введите ID центра' : 'Пусто — весь граф'}" ${lock(!state.graph)}>`
+    : `<select id="root-select" ${lock(!state.graph)}><option value="" ${wholeGraphUnavailable ? 'disabled' : ''}>${wholeGraphUnavailable ? 'Весь граф — выше лимита' : 'Весь граф'}</option>${nodes.map(n => `<option value="${esc(n.id)}" ${String(n.id) === state.options.root ? 'selected' : ''}>${esc(n.label || n.id)}</option>`).join('')}</select>`;
+  const rootHelp = wholeGraphUnavailable
+    ? 'Большой набор анализируется локально: выберите центр и радиус.'
+    : largeRootInput ? 'Оставьте поле пустым для всего графа; для локальной области введите точный ID или выберите вершину на карте.' : 'Аккаунт, чьё окружение анализируется.';
   return `<section class="panel control-panel"><div class="panel-header"><h2>Параметры</h2></div><div class="panel-body">
-    <div class="form-field"><label for="root-select">Центр окружения</label><select id="root-select" ${lock(!state.graph)}><option value="">Весь граф</option>${nodes.map(n => `<option value="${esc(n.id)}" ${String(n.id) === state.options.root ? 'selected' : ''}>${esc(n.label || n.id)}</option>`).join('')}</select><small>Аккаунт, чьё окружение анализируется.</small></div>
+    <div class="form-field"><label for="root-select">Центр окружения</label>${rootControl}<small>${rootHelp}</small></div>
     <div class="form-field"><label for="radius-select">Радиус</label><select id="radius-select" ${lock(!state.graph || !state.options.root)}>${[1,2,3].map(r => `<option value="${r}" ${r === state.options.radius ? 'selected' : ''}>${r} ${r === 1 ? 'шаг' : 'шага'} от центра</option>`).join('')}</select></div>
     <div class="form-field"><label class="inline-label" for="threshold-range"><span>Порог сходства</span><span class="value-badge" id="threshold-display">${decimal(state.options.threshold)}</span></label><input id="threshold-range" type="range" min="0" max="1" step=".05" value="${state.options.threshold}" ${lock(!state.graph)}><div class="range-labels"><span>0,00</span><span>1,00</span></div></div>
     <label class="checkbox-field"><input id="exclude-root" type="checkbox" ${state.options.exclude_root ? 'checked' : ''} ${lock(!state.graph || !state.options.root)}><span>Не считать центр общим другом</span></label>
     <button class="button button-orange full-width" data-action="analyze" ${lock(!state.graph)}>${icon('orbit')}Анализировать</button>
   </div></section>`;
 }
+function pairCoverageHTML() {
+  const s=state.analysis?.summary;if(!s)return '';
+  const sourceCount=state.graph?.nodes?.length ?? s.node_count;
+  const whole=s.node_count===sourceCount;
+  const root=state.analysis.options?.root;
+  const eligible=s.eligible_node_count ?? s.node_count-Number(Boolean(root));
+  const returned=s.returned_pair_count ?? state.analysis.pairs?.length ?? 0;
+  const scope=whole
+    ? `В расчёт вошли все ${number(s.node_count)} вершин загруженного графа.`
+    : `В расчёт вошли ${number(s.node_count)} из ${number(sourceCount)} вершин — только выбранная индуцированная область.`;
+  const eligibility=root ? ` Центр ${esc(root)} зафиксирован и не входит в пары; сравниваются ${number(eligible)} остальных вершин.` : ` Сравниваются все ${number(eligible)} вершин.`;
+  const screening=s.possible_pair_count==null ? '' : ` Охвачены все ${number(s.possible_pair_count)} возможных пар; количество пар для подробного расчёта после точного предварительного правила — ${number(s.scored_pair_count)}.`;
+  const scoreRange=s.candidate_score_min==null ? '' : ` Диапазон итоговой оценки кандидатов: ${decimal(s.candidate_score_min)}–${decimal(s.candidate_score_max)}.`;
+  const output=s.candidate_count>returned ? ` В таблице выданы первые ${number(returned)} из ${number(s.candidate_count)} кандидатов.` : ` В таблице показаны все ${number(s.candidate_count)} найденных кандидатов.`;
+  return `<div class="notice pair-coverage">${icon('info')}<p>${scope}${eligibility}${screening}${scoreRange}${output} Ограничение карты по видимой области на расчёт не влияет.</p></div>`;
+}
 function renderGraphPage() {
-  const canvas = `<section class="panel canvas-panel"><div class="canvas-top"><div class="canvas-title"><h2>Карта связей</h2><span>НЕОРИЕНТИРОВАННЫЙ ГРАФ</span></div><div class="canvas-search">${icon('search')}<input class="input" id="node-search" placeholder="Найти аккаунт…" aria-label="Поиск вершины по имени или ID" value="${esc(state.nodeQuery)}"></div></div><div class="graph-stage" id="graph-stage"><svg id="network" class="network-svg" viewBox="0 0 1000 700" role="img" aria-label="Интерактивная карта связей графа. Нажмите вершину, чтобы увидеть её окружение."></svg>${!state.analysis && state.graph ? '<div class="graph-stale">Параметры изменены. Запустите анализ, чтобы обновить результат.</div>' : ''}<div class="graph-controls"><button class="icon-button" data-action="zoom-in" aria-label="Приблизить" title="Приблизить">${icon('plus')}</button><span class="zoom-level" id="zoom-level">100%</span><button class="icon-button" data-action="zoom-out" aria-label="Отдалить" title="Отдалить">${icon('minus')}</button><button class="icon-button" data-action="fit-graph" aria-label="Показать весь граф" title="Показать весь граф">${icon('fit')}</button></div><span class="graph-guide">Перетащите вершину или поле.<br>Колесо мыши — масштаб.</span></div><div class="canvas-foot"><span class="legend-strong"><i class="legend-dot" style="background:#6e9985"></i>Цвет — нетривиальная орбита</span><span><i class="legend-dot" style="background:#ecaa69"></i>Выбранная пара</span><span>Серый — орбита из 1 вершины</span></div></section>`;
+  const hasLocalArea = state.analysis && (state.analysis.graph.nodes.length !== state.graph.nodes.length || state.analysis.graph.edges.length !== state.graph.edges.length);
+  const scopeSwitch = hasLocalArea ? `<div class="segmented graph-scope" aria-label="Область карты"><button class="${state.graphScope === 'analysis' ? 'active' : ''}" data-action="graph-scope" data-scope="analysis">Область анализа</button><button class="${state.graphScope === 'source' ? 'active' : ''}" data-action="graph-scope" data-scope="source">Весь набор</button></div>` : '';
+  const scopeLabel = state.graphScope === 'source' && hasLocalArea ? 'ИСХОДНЫЙ НАБОР' : state.options.root ? `РАДИУС ${state.options.radius} ОТ ЦЕНТРА` : 'НЕОРИЕНТИРОВАННЫЙ ГРАФ';
+  const canvas = `<section class="panel canvas-panel"><div class="canvas-top"><div class="canvas-title"><h2>Карта связей</h2><span>${scopeLabel}</span></div><div class="canvas-tools">${scopeSwitch}<div class="canvas-search">${icon('search')}<input class="input" id="node-search" placeholder="Найти аккаунт…" aria-label="Поиск вершины по имени или ID" value="${esc(state.nodeQuery)}"></div></div></div><div class="graph-stage" id="graph-stage"><svg id="network" class="network-svg" viewBox="0 0 1000 700" role="img" aria-label="Интерактивная карта связей графа. Нажмите вершину, чтобы увидеть её окружение."></svg>${!state.analysis && state.graph ? '<div class="graph-stale">Параметры изменены. Запустите анализ, чтобы обновить результат.</div>' : ''}<div class="graph-controls"><button class="icon-button" data-action="zoom-in" aria-label="Приблизить" title="Приблизить">${icon('plus')}</button><span class="zoom-level" id="zoom-level">100%</span><button class="icon-button" data-action="zoom-out" aria-label="Отдалить" title="Отдалить">${icon('minus')}</button><button class="icon-button" data-action="fit-graph" aria-label="Показать весь граф" title="Показать весь граф">${icon('fit')}</button></div><span class="graph-render-status" id="graph-render-status" aria-live="polite"></span><span class="graph-guide">Перетащите вершину или поле.<br>Колесо мыши — масштаб.</span></div><div class="canvas-foot"><span class="legend-strong"><i class="legend-dot" style="background:#6e9985"></i>Цвет — нетривиальная орбита</span><span><i class="legend-dot" style="background:#ecaa69"></i>Выбранная пара</span><span>Серый — орбита из 1 вершины</span></div></section>`;
   return heading('Структура графа','Увидеть связи. Найти сходство.','Цвет вершины — её орбита: группа аккаунтов, взаимозаменяемых в этом графе. Выберите вершину, чтобы рассмотреть её окружение.', graphPill() + (state.analysis ? `<button class="button button-outline button-small" data-action="export-subgraph" aria-label="Скачать JSON выбранного подграфа" ${lock()}>${icon('download')}<span>JSON подграфа</span></button>` : '')) + dataBanner() + statsHTML() +
-    (state.graph ? `<div class="graph-workbench">${analysisControls()}${canvas}${inspectorHTML()}</div>${warningsHTML(state.analysis?.warnings || state.graph.metadata?.warnings)}<div class="section-line"><h2>Похожие пары аккаунтов <span class="count-label">${number(state.analysis?.summary?.candidate_count)}</span></h2><button class="button button-text button-small" data-view="candidates">Все кандидаты ${icon('arrow')}</button></div><div id="candidate-table-region">${candidateTableHTML(true)}</div><p class="table-caption">Кандидаты — пары с наибольшим структурным сходством окружений.</p>` : `<section class="panel">${emptyHTML('Начните с графа', 'Откройте модельный пример или загрузите собственный список связей.', 'network', '<button class="button button-orange" data-view="data">Выбрать данные</button>')}</section>`);
+    (state.graph ? `<div class="graph-workbench">${analysisControls()}${canvas}${inspectorHTML()}</div>${warningsHTML(state.analysis?.warnings || state.graph.metadata?.warnings)}<div class="section-line"><h2>Похожие пары аккаунтов <span class="count-label">${number(state.analysis?.summary?.candidate_count)}</span></h2><button class="button button-text button-small" data-view="candidates">Все кандидаты ${icon('arrow')}</button></div>${pairCoverageHTML()}<div id="candidate-table-region">${candidateTableHTML(true)}</div><p class="table-caption">Кандидаты — пары с наибольшим структурным сходством окружений.</p>` : `<section class="panel">${emptyHTML('Начните с графа', 'Откройте модельный пример или загрузите собственный список связей.', 'network', '<button class="button button-orange" data-view="data">Выбрать данные</button>')}</section>`);
 }
 function inspectorHTML() {
   let title = 'Орбиты графа', body;
@@ -260,7 +311,7 @@ function candidateTableHTML(preview = false) {
 }
 function renderCandidatesPage() {
   const exportButtons = `<button class="button button-outline button-small" data-action="export-csv" aria-label="Скачать кандидатов CSV" ${lock(!state.analysis)}>${icon('download')}<span>CSV</span></button><button class="button button-dark button-small" data-action="export-html" aria-label="Скачать отчёт HTML" ${lock(!state.analysis)}>${icon('file')}<span>Отчёт HTML</span></button>`;
-  return heading('Кандидаты / пары для проверки','Похожие пары аккаунтов','Отсортированы по структурной оценке: сверху — самые похожие окружения. Нажмите строку, чтобы сравнить пары по друзьям.', exportButtons) + dataBanner() + `<div class="panel filter-bar"><div class="search-field">${icon('search')}<input class="input" id="pair-search" placeholder="Имя или ID аккаунта…" aria-label="Поиск пары по имени или ID" value="${esc(state.pairQuery)}"></div><div class="segmented" aria-label="Фильтр пар">${[['all','Все пары'],['orbit','Одна орбита'],['similar','Разные орбиты']].map(([id,name]) => `<button data-action="filter-pairs" data-filter="${id}" class="${state.pairMode === id ? 'active' : ''}" aria-pressed="${state.pairMode === id}">${name}</button>`).join('')}</div></div><div class="table-view-hint" style="margin:10px 3px 13px">Нажмите заголовок столбца, чтобы изменить сортировку. Нажмите строку, чтобы сравнить окружения.</div><div class="table-split"><div id="candidate-table-region">${candidateTableHTML()}</div>${inspectorHTML()}</div>${evaluationHTML()}${warningsHTML(state.analysis?.warnings)}<p class="table-caption">Порог: ${decimal(state.options.threshold)}. Экспорт CSV содержит все возвращённые пары, включая скрытые текущим фильтром. Разметка аккаунтов не участвует в вычислении сходства.</p>`;
+  return heading('Кандидаты / пары для проверки','Похожие пары аккаунтов','Отсортированы по структурной оценке: сверху — самые похожие окружения. Нажмите строку, чтобы сравнить пары по друзьям.', exportButtons) + dataBanner() + pairCoverageHTML() + `<div class="panel filter-bar"><div class="search-field">${icon('search')}<input class="input" id="pair-search" placeholder="Имя или ID аккаунта…" aria-label="Поиск пары по имени или ID" value="${esc(state.pairQuery)}"></div><div class="segmented" aria-label="Фильтр пар">${[['all','Все пары'],['orbit','Одна орбита'],['similar','Разные орбиты']].map(([id,name]) => `<button data-action="filter-pairs" data-filter="${id}" class="${state.pairMode === id ? 'active' : ''}" aria-pressed="${state.pairMode === id}">${name}</button>`).join('')}</div></div><div class="table-view-hint" style="margin:10px 3px 13px">Нажмите заголовок столбца, чтобы изменить сортировку. Нажмите строку, чтобы сравнить окружения.</div><div class="table-split"><div id="candidate-table-region">${candidateTableHTML()}</div>${inspectorHTML()}</div>${evaluationHTML()}${warningsHTML(state.analysis?.warnings)}<p class="table-caption">Порог: ${decimal(state.options.threshold)}. Экспорт CSV содержит все возвращённые пары, включая скрытые текущим фильтром. Разметка аккаунтов не участвует в вычислении сходства.</p>`;
 }
 function evaluationHTML() {
   const evaluation = state.analysis?.evaluation;
@@ -274,7 +325,7 @@ function renderData() {
   const labeled = graph?.nodes.filter(n => n.truth && n.truth !== 'unknown').length || 0;
   const projectList = state.projects.length ? state.projects.map(p => `<div class="project-row">${icon('folder')}<div class="project-content"><strong>${esc(p.name)}</strong><small>${number(p.node_count)} вершин · ${number(p.edge_count)} связей · ${formatDate(p.updated_at)}</small></div><div class="project-actions"><button class="button button-outline" data-action="load-project" data-project="${esc(p.id)}" ${lock()}>Открыть</button><button class="icon-button danger-text" data-action="delete-project" data-project="${esc(p.id)}" aria-label="Удалить проект ${esc(p.name)}" ${lock()}>${icon('trash')}</button></div></div>`).join('') : '<p class="inline-empty">Сохранённых проектов пока нет. Загрузите граф, выполните анализ и нажмите «Сохранить».</p>';
   return heading('Данные / рабочее пространство','Загрузите граф связей','Файл CSV со столбцами source и target, JSON со списком вершин и рёбер — или сбор окружения VK по ID и токену.',graphPill()) +
-  `<div class="data-grid"><div class="data-main"><section class="panel"><div class="panel-header"><h2>Граф</h2>${graph ? `<button class="button button-text button-small" data-action="export-json" ${lock()}>${icon('download')}JSON</button>` : ''}</div><div class="panel-body"><div class="dropzone" id="graph-dropzone">${icon('upload')}<strong>Перетащите файл сюда</strong><p>CSV / TSV со списком связей или JSON с вершинами и рёбрами.<br>До 2000 вершин, 100 000 связей и 20 МБ.</p><span class="button button-dark">Выбрать файл</span><input type="file" id="graph-file" accept=".csv,.tsv,.txt,.json,text/csv,text/tab-separated-values,text/plain,application/json" aria-label="Загрузить граф в формате CSV или JSON" ${lock()}></div><div class="format-note">CSV: столбцы <code>source</code> и <code>target</code>. JSON: массивы <code>nodes</code> и <code>edges</code>.<br>Файлы обрабатываются вашим локальным сервером.</div>${graph ? `<div class="dataset-summary"><div><strong>${esc(graph.name || 'Без названия')}</strong><p>${number(graph.nodes.length)} вершин · ${number(graph.edges.length)} связей · ${number(labeled)} размеченных вершин</p></div>${icon('network')}</div><div class="labels-area"><div><h3 style="font-size:11px;margin:0 0 5px">Разметка для оценки</h3><p>CSV: <span class="mono">id,truth,clone_of</span>.<br>Метки используются только для оценки качества.</p></div><label class="button button-outline button-small file-button">${icon('upload')}Загрузить метки<input type="file" id="labels-file" accept=".csv,.tsv,.txt,.json,text/csv,text/tab-separated-values,text/plain,application/json" aria-label="Загрузить разметку" ${lock()}></label></div>${warningsHTML(graph.metadata?.warnings)}<button class="button button-orange" data-action="analyze-open" ${lock()}>${icon('orbit')}Перейти к исследованию</button>` : '<p class="inline-empty">Набор данных ещё не выбран.</p>'}</div></section>
+  `<div class="data-grid"><div class="data-main"><section class="panel"><div class="panel-header"><h2>Граф</h2>${graph ? `<button class="button button-text button-small" data-action="export-json" ${lock()}>${icon('download')}JSON</button>` : ''}</div><div class="panel-body"><div class="dropzone" id="graph-dropzone">${icon('upload')}<strong>Перетащите файл сюда</strong><p>CSV / TSV со списком связей или JSON с вершинами и рёбрами.<br>До 20 000 вершин, 500 000 связей и 20 МБ.</p><span class="button button-dark">Выбрать файл</span><input type="file" id="graph-file" accept=".csv,.tsv,.txt,.json,text/csv,text/tab-separated-values,text/plain,application/json" aria-label="Загрузить граф в формате CSV или JSON" ${lock()}></div><div class="format-note">CSV: столбцы <code>source</code> и <code>target</code>. JSON: массивы <code>nodes</code> и <code>edges</code>.<br>Точный анализ одной выбранной области: до 10 000 вершин и 500 000 связей.</div>${graph ? `<div class="dataset-summary"><div><strong>${esc(graph.name || 'Без названия')}</strong><p>${number(graph.nodes.length)} вершин · ${number(graph.edges.length)} связей · ${number(labeled)} размеченных вершин</p></div>${icon('network')}</div><div class="labels-area"><div><h3 style="font-size:11px;margin:0 0 5px">Разметка для оценки</h3><p>CSV: <span class="mono">id,truth,clone_of</span>.<br>Метки используются только для оценки качества.</p></div><label class="button button-outline button-small file-button">${icon('upload')}Загрузить метки<input type="file" id="labels-file" accept=".csv,.tsv,.txt,.json,text/csv,text/tab-separated-values,text/plain,application/json" aria-label="Загрузить разметку" ${lock()}></label></div>${warningsHTML(graph.metadata?.warnings)}<button class="button button-orange" data-action="analyze-open" ${lock()}>${icon('orbit')}Перейти к исследованию</button>` : '<p class="inline-empty">Набор данных ещё не выбран.</p>'}</div></section>
   <section class="panel" id="projects-section"><div class="panel-header"><h2>Сохранённые проекты</h2><button class="icon-button" data-action="refresh-projects" aria-label="Обновить проекты" ${lock()}>${icon('refresh')}</button></div><div class="panel-body" style="padding-top:3px;padding-bottom:3px">${projectList}</div></section></div>
   <div class="data-aside"><section class="panel"><div class="panel-header"><h2>Готовые примеры</h2><span class="badge badge-orange">Синтетика</span></div><div class="panel-body"><div class="demo-grid">${state.demos.length ? state.demos.map((d,i) => `<button class="demo-card ${state.demoId === d.id ? 'selected' : ''}" data-action="load-demo" data-demo="${esc(d.id)}" ${lock()}>${icon(['network','orbit','chart'][i%3])}<strong>${esc(d.name)}</strong><small>${esc(d.description)}</small></button>`).join('') : '<p class="inline-empty">Примеры недоступны. Проверьте подключение к серверу.</p>'}</div><p class="vk-caption">Изучите поведение алгоритма на структурах с заранее известными свойствами.</p></div></section>
   <details class="panel details-block"><summary class="panel-header">Окружение VK · по запросу</summary><div class="panel-body"><form id="vk-form" class="vk-form"><div class="form-field"><label for="vk-user">Числовой ID пользователя</label><input id="vk-user" class="input" value="${esc(state.vkUser)}" placeholder="Например, 123456" inputmode="numeric" pattern="[1-9][0-9]*" autocomplete="off" required ${lock()}></div><div class="form-field"><label for="vk-limit">Друзей, до</label><input id="vk-limit" class="input" type="number" min="1" max="80" value="${state.vkLimit}" required ${lock()}></div><button class="button button-outline full-width wide" type="submit" ${lock()}>${icon('download')}Получить граф</button></form><p class="vk-caption">Токен VK настроен на сервере (файл .env). Доступность списков друзей зависит от приватности профилей.</p><div class="privacy-line">${icon('shield')}Запрос к VK выполняется только по вашей команде.</div></div></details></div></div>`;
@@ -345,20 +396,26 @@ function preparePositions(graph) {
   graphView.layoutHeight=graphView.height;
   const centerY=graphView.height/2-15, spanY=Math.max(350,graphView.height-210);
   const nodes=graph.nodes, finite=nodes.every(n => n.x != null && n.y != null && Number.isFinite(Number(n.x)) && Number.isFinite(Number(n.y)));
+  const virtualWidth=nodes.length>500?Math.min(12000,Math.max(1200,Math.sqrt(nodes.length)*64)):740;
+  const virtualHeight=nodes.length>500?virtualWidth*Math.min(1,Math.max(.58,spanY/740)):spanY;
   if(finite && nodes.length > 1) {
     const xs=nodes.map(n=>Number(n.x)), ys=nodes.map(n=>Number(n.y));
     const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
-    const scaleX=740/Math.max(maxX-minX,.001),scaleY=spanY/Math.max(maxY-minY,.001);
+    const scaleX=virtualWidth/Math.max(maxX-minX,.001),scaleY=virtualHeight/Math.max(maxY-minY,.001);
     nodes.forEach(n => graphView.positions.set(String(n.id),{x:500+(Number(n.x)-(minX+maxX)/2)*scaleX,y:centerY+(Number(n.y)-(minY+maxY)/2)*scaleY}));
   } else {
     const sorted=[...nodes].sort((a,b) => (Number(b.degree)||0)-(Number(a.degree)||0) || String(a.id).localeCompare(String(b.id)));
     if(sorted.length === 1) graphView.positions.set(String(sorted[0].id),{x:500,y:centerY});
-    else sorted.forEach((n,i) => { const angle=(Math.PI*2*i/Math.max(sorted.length,1))-Math.PI/2; graphView.positions.set(String(n.id),{x:500+Math.cos(angle)*365,y:centerY+Math.sin(angle)*spanY/2}); });
+    else sorted.forEach((n,i) => {
+      const angle=i*2.399963229728653-Math.PI/2, radius=Math.sqrt((i+.5)/sorted.length);
+      graphView.positions.set(String(n.id),{x:500+Math.cos(angle)*virtualWidth*.5*radius,y:centerY+Math.sin(angle)*virtualHeight*.5*radius});
+    });
   }
 }
 function spreadOverlaps(positions, degree) {
   const ids=[...positions.keys()];
-  const size=id=>{const d=degree.get(id)||0;return Math.min(27,10+Math.sqrt(d)*2.4)+4;};
+  const compact=ids.length>200;
+  const size=id=>{const d=degree.get(id)||0;return (compact?Math.min(13,4+Math.sqrt(d)*1.3):Math.min(27,10+Math.sqrt(d)*2.4))+4;};
   const cell=30, passes=10;
   for(let pass=0;pass<passes;pass++){
     const grid=new Map();
@@ -387,29 +444,124 @@ function spreadOverlaps(positions, degree) {
     if(!moved)break;
   }
 }
+function indexGraph(graph) {
+  graphView.degree=new Map(graph.nodes.map(node=>[String(node.id),0]));
+  graphView.adjacency=new Map(graph.nodes.map(node=>[String(node.id),[]]));
+  graphView.nodeById=new Map(graph.nodes.map(node=>[String(node.id),node]));
+  graph.edges.forEach((edge,index) => {
+    const source=String(edge.source),target=String(edge.target);
+    graphView.degree.set(source,(graphView.degree.get(source)||0)+1);
+    graphView.degree.set(target,(graphView.degree.get(target)||0)+1);
+    graphView.adjacency.get(source)?.push(index);
+    graphView.adjacency.get(target)?.push(index);
+  });
+  graphView.topNodes=new Set([...graph.nodes].sort((a,b)=>(graphView.degree.get(String(b.id))||0)-(graphView.degree.get(String(a.id))||0)).slice(0,12).map(node=>String(node.id)));
+}
+function graphVisibleBounds() {
+  const margin=55/Math.max(graphView.zoom,.001);
+  return {
+    minX:(-graphView.tx)/graphView.zoom-margin,
+    maxX:(1000-graphView.tx)/graphView.zoom+margin,
+    minY:(-graphView.ty)/graphView.zoom-margin,
+    maxY:(graphView.height-graphView.ty)/graphView.zoom+margin,
+  };
+}
+function selectedGraphIds() {
+  const selected=new Set();
+  if(state.selectedPair){selected.add(String(state.selectedPair.source));selected.add(String(state.selectedPair.target));}
+  if(state.selectedNode)selected.add(String(state.selectedNode));
+  if(state.options.root)selected.add(String(state.options.root));
+  if(state.selectedOrbit!=null) {
+    for(const node of displayedGraph()?.nodes||[])if(node.orbit===state.selectedOrbit)selected.add(String(node.id));
+  }
+  return selected;
+}
+function visibleNodeIds(graph) {
+  const bounds=graphVisibleBounds(), visible=[];
+  for(const [id,p] of graphView.positions) {
+    if(p.x>=bounds.minX&&p.x<=bounds.maxX&&p.y>=bounds.minY&&p.y<=bounds.maxY)visible.push(id);
+  }
+  if(visible.length<=MAX_RENDERED_NODES)return {visible,rendered:visible,limited:false};
+  const visibleSet=new Set(visible),required=selectedGraphIds(),query=state.nodeQuery.trim().toLowerCase();
+  if(query)for(const id of visible){const node=graphView.nodeById.get(id);if([id,node?.label||''].some(value=>String(value).toLowerCase().includes(query)))required.add(id);}
+  const rendered=[...required].filter(id=>visibleSet.has(id)).slice(0,MAX_RENDERED_NODES);
+  const chosen=new Set(rendered);
+  const hubs=[...visible].sort((a,b)=>(graphView.degree.get(b)||0)-(graphView.degree.get(a)||0)||a.localeCompare(b)).slice(0,Math.min(120,MAX_RENDERED_NODES));
+  for(const id of hubs)if(!chosen.has(id)&&rendered.length<MAX_RENDERED_NODES){chosen.add(id);rendered.push(id);}
+  const spatial=[...visible].sort((a,b)=>graphView.positions.get(a).x-graphView.positions.get(b).x||graphView.positions.get(a).y-graphView.positions.get(b).y);
+  const remaining=MAX_RENDERED_NODES-rendered.length;
+  if(remaining>0) {
+    const step=spatial.length/remaining;
+    for(let i=0;rendered.length<MAX_RENDERED_NODES&&i<remaining;i++){
+      let index=Math.min(spatial.length-1,Math.floor((i+.5)*step)),id=spatial[index];
+      while(chosen.has(id)&&index+1<spatial.length)id=spatial[++index];
+      if(!chosen.has(id)){chosen.add(id);rendered.push(id);}
+    }
+  }
+  return {visible,rendered,limited:true};
+}
+function renderVisibleGraph() {
+  graphView.renderFrame=null;
+  const svg=graphView.svg,graph=displayedGraph();
+  const edgeGroup=svg?.querySelector('#graph-edges'),nodeGroup=svg?.querySelector('#graph-nodes');
+  if(!svg||!graph||!edgeGroup||!nodeGroup)return;
+  const {visible,rendered,limited}=visibleNodeIds(graph),renderedSet=new Set(rendered);
+  const selected=selectedGraphIds(),edgeIndices=new Set();
+  const addEdges=id=>{
+    for(const index of graphView.adjacency.get(id)||[]){
+      const edge=graph.edges[index],source=String(edge.source),target=String(edge.target);
+      if(renderedSet.has(source)&&renderedSet.has(target))edgeIndices.add(index);
+    }
+  };
+  for(const id of selected)if(renderedSet.has(id))addEdges(id);
+  for(const id of rendered)addEdges(id);
+  const orderedEdges=[...edgeIndices].sort((a,b)=>{
+    const ea=graph.edges[a],eb=graph.edges[b];
+    const activeA=Number(selected.has(String(ea.source))||selected.has(String(ea.target)));
+    const activeB=Number(selected.has(String(eb.source))||selected.has(String(eb.target)));
+    return activeB-activeA;
+  });
+  const edgeFragment=document.createDocumentFragment();
+  for(const index of orderedEdges.slice(0,MAX_RENDERED_EDGES)) {
+    const edge=graph.edges[index],source=String(edge.source),target=String(edge.target);
+    const a=graphView.positions.get(source),b=graphView.positions.get(target);if(!a||!b)continue;
+    edgeFragment.append(svgElement('line',{class:'graph-edge',x1:a.x,y1:a.y,x2:b.x,y2:b.y,'data-source':source,'data-target':target}));
+  }
+  edgeGroup.replaceChildren(edgeFragment);
+  const nodeFragment=document.createDocumentFragment(),big=graph.nodes.length>200;
+  for(const id of rendered) {
+    const node=graphView.nodeById.get(id),p=graphView.positions.get(id),d=graphView.degree.get(id)||0;
+    if(!node||!p)continue;
+    const radius=big?Math.min(13,4+Math.sqrt(d)*1.3):Math.min(27,10+Math.sqrt(d)*2.4);
+    const group=svgElement('g',{class:'graph-node',transform:`translate(${p.x},${p.y})`,'data-node':id,tabindex:'0',role:'button','aria-label':`${node.label||id}, ${d} связей`});
+    group.append(svgElement('title',{},`${node.label||id} · ID ${id} · ${d} связей${node.orbit!=null?` · орбита ${node.orbit}`:''}`));
+    group.append(svgElement('circle',{class:'node-ring',r:radius+7,display:'none'}));
+    group.append(svgElement('circle',{class:'node-dot',r:radius,fill:orbitColor(node.orbit)}));
+    group.append(svgElement('text',{class:'node-label',y:radius+12,'font-size':big?'11':'15','data-default-visible':String(graph.nodes.length<=20||graphView.topNodes.has(id)||state.analysis?.orbits.some(orbit=>orbit.id===node.orbit&&orbit.size>1))},node.label||id));
+    nodeFragment.append(group);
+  }
+  nodeGroup.replaceChildren(nodeFragment);
+  graphView.renderedNodes=renderedSet;graphView.renderedEdges=Math.min(orderedEdges.length,MAX_RENDERED_EDGES);
+  const status=document.querySelector('#graph-render-status');
+  if(status) {
+    const edgeLimited=orderedEdges.length>MAX_RENDERED_EDGES;
+    status.textContent=`В кадре: ${number(rendered.length)} вершин · ${number(graphView.renderedEdges)} связей${limited||edgeLimited?' · приблизьте для деталей':''}`;
+    status.classList.toggle('limited',limited||edgeLimited);
+    status.title=`В область кадра попало ${number(visible.length)} из ${number(graph.nodes.length)} вершин. SVG содержит только отображаемую часть.`;
+  }
+  applyGraphHighlight();
+}
+function scheduleGraphRender() {
+  if(graphView.renderFrame!=null)return;
+  graphView.renderFrame=requestAnimationFrame(renderVisibleGraph);
+}
 function drawGraph() {
   const svg=document.querySelector('#network'); const graph=displayedGraph(); if(!svg || !graph) return;
   graphView.svg=svg; graphView.height=Math.max(620,1000*svg.clientHeight/Math.max(svg.clientWidth,1));
   svg.setAttribute('viewBox',`0 0 1000 ${graphView.height}`); preparePositions(graph);
   const viewport=svgElement('g',{id:'graph-viewport'}), edges=svgElement('g',{id:'graph-edges'}), nodesGroup=svgElement('g',{id:'graph-nodes'});
-  const degree=new Map(graph.nodes.map(n=>[String(n.id),0]));
-  graph.edges.forEach(e => {degree.set(String(e.source),(degree.get(String(e.source))||0)+1);degree.set(String(e.target),(degree.get(String(e.target))||0)+1);});
-  for(const edge of graph.edges) {
-    const a=graphView.positions.get(String(edge.source)),b=graphView.positions.get(String(edge.target)); if(!a||!b) continue;
-    edges.append(svgElement('line',{class:'graph-edge',x1:a.x,y1:a.y,x2:b.x,y2:b.y,'data-source':String(edge.source),'data-target':String(edge.target)}));
-  }
-  const topNodes=new Set([...graph.nodes].sort((a,b)=>(degree.get(String(b.id))||0)-(degree.get(String(a.id))||0)).slice(0,12).map(n=>String(n.id)));
-  if(graph.nodes.length>120) spreadOverlaps(graphView.positions, degree);
-  for(const node of graph.nodes) {
-    const id=String(node.id), p=graphView.positions.get(id), d=degree.get(id)||0;
-    const big=graph.nodes.length>200, radius=big?Math.min(13,4+Math.sqrt(d)*1.3):Math.min(27,10+Math.sqrt(d)*2.4);
-    const group=svgElement('g',{class:'graph-node',transform:`translate(${p.x},${p.y})`,'data-node':id,tabindex:'0',role:'button','aria-label':`${node.label || id}, ${d} связей`});
-    group.append(svgElement('title',{},`${node.label || id} · ID ${id} · ${d} связей${state.analysis ? ` · орбита ${node.orbit}` : ''}`));
-    group.append(svgElement('circle',{class:'node-ring',r:radius+7,display:'none'}));
-    group.append(svgElement('circle',{class:'node-dot',r:radius,fill:orbitColor(node.orbit)}));
-    const label=svgElement('text',{class:'node-label',y:radius+12,'font-size':big?'11':'15','data-default-visible':String(graph.nodes.length<=20 || topNodes.has(id) || state.analysis?.orbits.some(o=>o.id===node.orbit&&o.size>1))},node.label || id);
-    group.append(label); nodesGroup.append(group);
-  }
+  indexGraph(graph);
+  if(graph.nodes.length>120&&graph.nodes.length<=500)spreadOverlaps(graphView.positions,graphView.degree);
   viewport.append(edges,nodesGroup); svg.append(viewport); applyGraphTransform(); applyGraphHighlight();
   svg.addEventListener('pointerdown', graphPointerDown);
   svg.addEventListener('pointermove', graphPointerMove);
@@ -445,6 +597,7 @@ function graphPointerUp(event) {
   const drag=graphView.drag;if(!drag || drag.pointerId!==event.pointerId) return;
   graphView.drag=null;graphView.svg.classList.remove('dragging');
   if(graphView.svg.hasPointerCapture(event.pointerId)) graphView.svg.releasePointerCapture(event.pointerId);
+  scheduleGraphRender();
   if(!drag.moved) { if(drag.id) selectNode(drag.id); else {state.selectedPair=null;state.selectedNode=null;state.selectedOrbit=null;refreshSelection();} }
 }
 function updateNodePosition(id,p) {
@@ -458,16 +611,17 @@ function applyGraphTransform() {
   const viewport=document.querySelector('#graph-viewport');
   if(viewport) viewport.setAttribute('transform',`translate(${graphView.tx} ${graphView.ty}) scale(${graphView.zoom})`);
   const label=document.querySelector('#zoom-level');if(label) label.textContent=`${Math.round(graphView.zoom*100)}%`;
+  scheduleGraphRender();
 }
 function zoomGraph(factor,anchor={x:500,y:graphView.height/2}) {
-  const next=bounded(graphView.zoom*factor,.25,5),ratio=next/graphView.zoom;
+  const next=bounded(graphView.zoom*factor,MIN_GRAPH_ZOOM,5),ratio=next/graphView.zoom;
   graphView.tx=anchor.x-(anchor.x-graphView.tx)*ratio;graphView.ty=anchor.y-(anchor.y-graphView.ty)*ratio;
   graphView.zoom=next;applyGraphTransform();
 }
 function fitGraph() {
   const ps=[...graphView.positions.values()];if(!ps.length)return;
   const minX=Math.min(...ps.map(p=>p.x)),maxX=Math.max(...ps.map(p=>p.x)),minY=Math.min(...ps.map(p=>p.y)),maxY=Math.max(...ps.map(p=>p.y));
-  graphView.zoom=bounded(Math.min(800/Math.max(maxX-minX,1),(graphView.height-210)/Math.max(maxY-minY,1)),.25,1.4);
+  graphView.zoom=bounded(Math.min(800/Math.max(maxX-minX,1),(graphView.height-210)/Math.max(maxY-minY,1)),MIN_GRAPH_ZOOM,1.4);
   graphView.tx=500-(minX+maxX)/2*graphView.zoom;graphView.ty=graphView.height/2-15-(minY+maxY)/2*graphView.zoom;applyGraphTransform();
 }
 function applyGraphHighlight() {
@@ -476,13 +630,16 @@ function applyGraphHighlight() {
   const selected=new Set(), common=new Set((pair?.common_neighbors || []).map(String)),around=new Set();
   if(pair){selected.add(String(pair.source));selected.add(String(pair.target));}
   if(state.selectedNode)selected.add(String(state.selectedNode));
-  graph.edges.forEach(e => {if(selected.has(String(e.source)))around.add(String(e.target));if(selected.has(String(e.target)))around.add(String(e.source));});
+  for(const id of selected)for(const index of graphView.adjacency.get(id)||[]){
+    const edge=graph.edges[index],source=String(edge.source),target=String(edge.target);
+    around.add(source===id?target:source);
+  }
   if(state.selectedOrbit!=null) graph.nodes.forEach(n=>{if(n.orbit===state.selectedOrbit)selected.add(String(n.id));});
   const searching=Boolean(query),selection=selected.size>0;
-  let matches=0;
+  const hits=new Set();
+  if(searching)for(const node of graph.nodes){const id=String(node.id);if([id,node.label||''].some(value=>String(value).toLowerCase().includes(query)))hits.add(id);}
   svg.querySelectorAll('.graph-node').forEach(group => {
-    const id=group.dataset.node,node=map.get(id),hit=searching && [id,node?.label || ''].some(v=>String(v).toLowerCase().includes(query));
-    if(hit)matches++;
+    const id=group.dataset.node,node=map.get(id),hit=hits.has(id);
     let color=state.analysis ? orbitColor(node?.orbit) : '#90aa97';
     if(id===state.options.root)color='#355749';
     if(pair){if(id===String(pair.source))color='#ec9d5d';else if(id===String(pair.target))color='#4b8e7c';else if(common.has(id))color='#e4bb75';}
@@ -500,7 +657,7 @@ function applyGraphHighlight() {
     edge.style.strokeOpacity=selection ? active?'.8':'.10' : '.52';
     edge.style.stroke=pair&&((selected.has(a)&&common.has(b))||(selected.has(b)&&common.has(a)))?'#d8ac65':active?'#829e86':'#bacabb';
   });
-  const input=document.querySelector('#node-search');if(input){input.setAttribute('aria-label',searching?`Поиск вершины. Найдено: ${matches}`:'Поиск вершины по имени или ID');input.title=searching?`Совпадений: ${matches}`:'';}
+  const input=document.querySelector('#node-search');if(input){input.setAttribute('aria-label',searching?`Поиск вершины. Найдено: ${hits.size}`:'Поиск вершины по имени или ID');input.title=searching?`Совпадений: ${hits.size}`:'';}
 }
 function refreshSelection() {
   const inspector=document.querySelector('#inspector');if(inspector)inspector.outerHTML=inspectorHTML();
@@ -521,7 +678,7 @@ function openModal(title,body,{drawer=false,onOpen}={}) {
 }
 function closeModal() {document.querySelector('#modal-root').innerHTML='';document.body.style.overflow='';state.modalReturn?.focus?.();}
 function methodology() {
-  openModal('Как устроено исследование',`<div class="eyebrow">Методика / Орбита</div><div class="method-section"><h3>1. Что анализируется</h3><p>Аккаунты представлены вершинами простого неориентированного графа, связи — рёбрами. Можно исследовать весь загруженный граф или окружение выбранной вершины на расстоянии 1–3 шагов. Направления и типы связей в этой модели не различаются.</p></div><div class="method-section"><h3>2. Автоморфизмы и орбиты</h3><p>Автоморфизм — перестановка вершин, сохраняющая все рёбра. Две вершины находятся в одной орбите, если существует такая перестановка, переводящая одну в другую. Нетривиальные орбиты выделены цветом, одноэлементные — серым, центр — тёмным. Номер орбиты точно определяет группу, а размер вершины показывает число связей.</p><p>Центр локального окружения фиксируется при поиске симметрий. Орбиты относятся к выбранному подграфу, а не ко всей социальной сети.</p></div><div class="method-section"><h3>3. Откуда берётся оценка пары</h3><p>J — индекс Жаккара: доля общих соседей среди всех соседей пары. O — орбитальный признак: обе вершины лежат в одной точной орбите. По умолчанию центр исключается из сравниваемых окружений, чтобы одна общая связь с ним не создавала ложное сходство.</p><div class="formula-grid"><div class="formula-card"><div class="formula-left"><span class="formula-var">O</span><span class="formula-name">орбита</span></div><div class="formula-body">O = 1, если a и b в одной точной орбите и оба окружения непусты; иначе O = 0</div></div><div class="formula-card"><div class="formula-left"><span class="formula-var">J</span><span class="formula-name">Жаккар</span></div><div class="formula-body">J = <span class="formula-frac"><span class="num">|N(a) ∩ N(b)|</span><span class="den">|N(a) ∪ N(b)|</span></span></div><div class="formula-note">N(a) — соседи аккаунта a. При пустом объединении J = 0. Пустые окружения не считаются свидетельством сходства.</div></div><div class="formula-card"><div class="formula-left"><span class="formula-var">S</span><span class="formula-name">оценка</span></div><div class="formula-body">S = (O + J) / 2</div><div class="formula-note">Пара попадает в кандидаты при S ≥ порога и наличии структурного свидетельства. Центр не участвует в сравнении пар.</div></div></div><p><strong>Порог выше 0,5 требует общей орбиты.</strong> Частично скопированные окружения могут потерять точную симметрию. В таких случаях простой метод общих соседей может оказаться полезнее — это проверяется в экспериментах.</p></div><div class="method-section"><h3>4. Что показывают эксперименты</h3><p>К исходному графу добавляются модельные клоны с заданной долей скопированных связей. Затем удаляется заданная доля рёбер и добавляется столько же случайных связей, если доступны отсутствующие рёбра. Связи с фиксированным центром не меняются. На каждом полученном графе сравниваются индекс Жаккара, орбитальный признак и их комбинация.</p><ul><li>Precision — доля верно найденных пар среди отмеченных.</li><li>Recall — доля найденных модельных пар среди добавленных.</li><li>F1 — гармоническое среднее точности и полноты.</li><li>Контрольные графы без добавленных клонов показывают ложные срабатывания.</li></ul><p>«—» означает отсутствие определённого значения метрики. Порог фиксируется до запуска.</p></div><div class="method-section"><h3>5. Интерпретация и данные</h3><p>Результат Орбиты — пары с максимальным структурным сходством окружений.</p><p>Разметка не влияет на поиск и цвета. Файлы и проекты обрабатываются локально. Запросы к VK выполняются только после явного запуска; токены не сохраняются. Проект записывается на диск только по кнопке «Сохранить».</p></div>`,{drawer:true});
+  openModal('Как устроено исследование',`<div class="eyebrow">Методика / Орбита</div><div class="method-section"><h3>1. Что анализируется</h3><p>Аккаунты представлены вершинами простого неориентированного графа, связи — рёбрами. Можно исследовать весь загруженный граф или окружение выбранной вершины на расстоянии 1–3 шагов. Одна область анализа может содержать до 10 000 вершин; карта рисует только текущий кадр, но это не меняет расчёт. Направления и типы связей в этой модели не различаются.</p></div><div class="method-section"><h3>2. Автоморфизмы и орбиты</h3><p>Автоморфизм — перестановка вершин, сохраняющая все рёбра. Две вершины находятся в одной орбите, если существует такая перестановка, переводящая одну в другую. Нетривиальные орбиты выделены цветом, одноэлементные — серым, центр — тёмным. Номер орбиты точно определяет группу, а размер вершины показывает число связей.</p><p>Центр локального окружения фиксируется при поиске симметрий. Орбиты относятся к выбранному подграфу, а не ко всей социальной сети.</p></div><div class="method-section"><h3>3. Откуда берётся оценка пары</h3><p>J — индекс Жаккара: доля общих соседей среди всех соседей пары. O — орбитальный признак: обе вершины лежат в одной точной орбите. По умолчанию центр исключается из сравниваемых окружений, чтобы одна общая связь с ним не создавала ложное сходство.</p><div class="formula-grid"><div class="formula-card"><div class="formula-left"><span class="formula-var">O</span><span class="formula-name">орбита</span></div><div class="formula-body">O = 1, если a и b в одной точной орбите и оба окружения непусты; иначе O = 0</div></div><div class="formula-card"><div class="formula-left"><span class="formula-var">J</span><span class="formula-name">Жаккар</span></div><div class="formula-body">J = <span class="formula-frac"><span class="num">|N(a) ∩ N(b)|</span><span class="den">|N(a) ∪ N(b)|</span></span></div><div class="formula-note">N(a) — соседи аккаунта a. При пустом объединении J = 0. Пустые окружения не считаются свидетельством сходства.</div></div><div class="formula-card"><div class="formula-left"><span class="formula-var">S</span><span class="formula-name">оценка</span></div><div class="formula-body">S = (O + J) / 2</div><div class="formula-note">Пара попадает в кандидаты при S ≥ порога и наличии структурного свидетельства. Центр не участвует в сравнении пар.</div></div></div><p><strong>Порог выше 0,5 требует общей орбиты.</strong> Все пары выбранной области охвачены. Для большого разреженного графа программа заранее исключает только те пары, которые по формуле не могут достичь порога; число всех возможных и подробно рассчитанных пар показано над таблицей.</p><p>Частично скопированные окружения могут потерять точную симметрию. В таких случаях простой метод общих соседей может оказаться полезнее — это проверяется в экспериментах.</p></div><div class="method-section"><h3>4. Что показывают эксперименты</h3><p>К исходному графу добавляются модельные клоны с заданной долей скопированных связей. Затем удаляется заданная доля рёбер и добавляется столько же случайных связей, если доступны отсутствующие рёбра. Связи с фиксированным центром не меняются. На каждом полученном графе сравниваются индекс Жаккара, орбитальный признак и их комбинация.</p><ul><li>Precision — доля верно найденных пар среди отмеченных.</li><li>Recall — доля найденных модельных пар среди добавленных.</li><li>F1 — гармоническое среднее точности и полноты.</li><li>Контрольные графы без добавленных клонов показывают ложные срабатывания.</li></ul><p>«—» означает отсутствие определённого значения метрики. Порог фиксируется до запуска.</p></div><div class="method-section"><h3>5. Интерпретация и данные</h3><p>Результат Орбиты — пары с максимальным структурным сходством окружений.</p><p>Разметка не влияет на поиск и цвета. Файлы и проекты обрабатываются локально. Запросы к VK выполняются только после явного запуска; токены не сохраняются. Проект записывается на диск только по кнопке «Сохранить».</p></div>`,{drawer:true});
 }
 async function refreshProjects() {const data=await api('/api/projects');state.projects=data.projects||[];}
 function showSaveProject() {
@@ -576,6 +733,11 @@ document.addEventListener('click',async event => {
     if(action==='analyze'||action==='analyze-open'){
       if(action==='analyze-open')setView('graph');
       await task('Вычисляем автоморфизмы и сравниваем окружения…',async()=>{await analyzeCurrent();toast('Анализ завершён.');});return;
+    }
+    if(action==='graph-scope'){
+      if(!['analysis','source'].includes(button.dataset.scope))return;
+      state.graphScope=button.dataset.scope;state.selectedPair=null;state.selectedNode=null;state.selectedOrbit=null;
+      graphView.graph=null;render();return;
     }
     if(action==='zoom-in'){zoomGraph(1.25);return;}
     if(action==='zoom-out'){zoomGraph(.8);return;}
@@ -637,7 +799,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('input',event=>{
   const el=event.target;
-  if(el.id==='node-search'){state.nodeQuery=el.value;applyGraphHighlight();}
+  if(el.id==='node-search'){state.nodeQuery=el.value;scheduleGraphRender();applyGraphHighlight();}
   if(el.id==='pair-search'){state.pairQuery=el.value;state.pairPage=0;const region=document.querySelector('#candidate-table-region');if(region)region.innerHTML=candidateTableHTML();}
   if(el.id==='threshold-range')document.querySelector('#threshold-display').textContent=decimal(el.value);
   if(el.id==='exp-retention')document.querySelector('#exp-retention-display').textContent=pct(el.value);
@@ -704,6 +866,7 @@ window.addEventListener('resize',()=>{
       graphView.drag=null;
       svg.replaceWith(svg.cloneNode(false));
       drawGraph();
+      fitGraph();
     }
   },160);
 });

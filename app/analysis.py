@@ -14,8 +14,11 @@ import pynauty
 
 from .ingest import normalize_graph
 
-MAX_NODES = 2000
-MAX_EDGES = 100_000
+MAX_NODES = 10_000
+MAX_EDGES = 500_000
+MAX_RETURNED_PAIRS = 20_000
+MAX_DETAILED_PAIRS = 5_000_000
+SPRING_LAYOUT_MAX_NODES = 2_000
 SCORING_CONVENTIONS = {
     "target": "Структурное сходство пары аккаунтов.",
     "jaccard": "J(u,v)=|A(u)∩A(v)|/|A(u)∪A(v)|; A(v)=N(v) без корня при exclude_root=true. Пустое объединение даёт 0.",
@@ -26,6 +29,7 @@ SCORING_CONVENTIONS = {
     "symmetry_scope": "Точные автоморфизмы выбранного индуцированного графа; при указанном корне он фиксирован.",
     "truth": "truth и clone_of используются только для оценки, никогда для вычисления орбит или score.",
     "pair_limit": "max_pairs ограничивает только выдачу; счётчики и оценка используют все пары кандидатов.",
+    "pair_screening": "Все допустимые пары покрываются точным предварительным правилом. До подробного расчёта отбрасываются только пары, которые математически не могут достичь выбранного порога.",
 }
 
 
@@ -58,7 +62,7 @@ def _read_options(options: dict | None) -> dict:
         "radius": _bounded_integer(raw.get("radius", 1), "radius", 1, 3),
         "threshold": _bounded_number(raw.get("threshold", .65), "threshold", 0, 1),
         "exclude_root": excluded,
-        "max_pairs": _bounded_integer(raw.get("max_pairs", 2000), "max_pairs", 0, MAX_NODES * (MAX_NODES - 1) // 2),
+        "max_pairs": _bounded_integer(raw.get("max_pairs", 2000), "max_pairs", 0, MAX_RETURNED_PAIRS),
         "layout_seed": 42,
         "conventions": deepcopy(SCORING_CONVENTIONS),
     }
@@ -66,9 +70,7 @@ def _read_options(options: dict | None) -> dict:
 
 def _prepare_graph(graph: dict, root: str | None = None, radius: int | None = None) -> tuple[dict, nx.Graph]:
     """Normalize and sort once; radius=None fixes root without cutting the graph."""
-    graph = normalize_graph(deepcopy(graph))
-    if len(graph["nodes"]) > MAX_NODES or len(graph["edges"]) > MAX_EDGES:
-        raise ValueError("Допускается не более 2000 вершин и 100000 рёбер без усечения.")
+    graph = normalize_graph(graph)
     graph["nodes"] = sorted(graph["nodes"], key=lambda node: node["id"])
     nx_graph = nx.Graph()
     nx_graph.add_nodes_from(node["id"] for node in graph["nodes"])
@@ -90,6 +92,17 @@ def _prepare_graph(graph: dict, root: str | None = None, radius: int | None = No
         if removed_clone_labels:
             metadata.setdefault("warnings", []).append(
                 f"У {removed_clone_labels} вершин исходная clone_of ссылается за пределы выбранной окрестности; ссылка исключена из локальной выгрузки. Отсутствие ссылки не означает отрицательную метку.")
+    if nx_graph.number_of_nodes() > MAX_NODES or nx_graph.number_of_edges() > MAX_EDGES:
+        size = f"{nx_graph.number_of_nodes()} вершин и {nx_graph.number_of_edges()} рёбер"
+        if root is None:
+            raise ValueError(
+                f"Полный граф содержит {size}. Для точного анализа выберите центр и радиус; "
+                f"одна область анализа должна содержать не более {MAX_NODES} вершин и {MAX_EDGES} рёбер."
+            )
+        raise ValueError(
+            f"Окрестность радиуса {radius} содержит {size}. Уменьшите радиус или выберите другой центр; "
+            f"предел точного анализа — {MAX_NODES} вершин и {MAX_EDGES} рёбер."
+        )
     graph["edges"] = [{"source": a, "target": b} for a, b in sorted(tuple(sorted(edge)) for edge in nx_graph.edges)]
     # Layout depends on insertion order, so rebuild the graph from sorted edges.
     canonical = nx.Graph()
@@ -127,27 +140,125 @@ def _neighborhoods(nx_graph: nx.Graph, root: str | None, exclude_root: bool) -> 
     return {node: set(nx_graph[node]) - ({root} if root is not None and exclude_root else set()) for node in nx_graph}
 
 
+def _pair_features(source: str, target: str, neighbors: dict[str, set[str]],
+                   full_neighbors: dict[str, set[str]], orbit: dict[str, int]) -> dict:
+    a, b = neighbors[source], neighbors[target]
+    common = a & b
+    union_size = len(a) + len(b) - len(common)
+    jaccard = len(common) / union_size if union_size else 0.0
+    same_orbit = orbit[source] == orbit[target]
+    orbit_evidence = int(same_orbit and bool(a) and bool(b))
+    twin_type = None
+    if target not in full_neighbors[source] and full_neighbors[source] == full_neighbors[target]:
+        twin_type = "false_twins"
+    elif target in full_neighbors[source] and (full_neighbors[source] | {source}) == (full_neighbors[target] | {target}):
+        twin_type = "true_twins"
+    return {"source": source, "target": target, "same_orbit": same_orbit,
+            "orbit_id": orbit[source] if same_orbit else None,
+            "common_neighbors": sorted(common), "jaccard": jaccard,
+            "orbit_evidence": orbit_evidence, "score": (orbit_evidence + jaccard) / 2,
+            "twin_type": twin_type}
+
+
 def _iter_pair_features(nx_graph: nx.Graph, state: dict, root: str | None, exclude_root: bool) -> Iterator[dict]:
+    """Reference iterator over every unordered eligible pair."""
     neighbors = _neighborhoods(nx_graph, root, exclude_root)
     full_neighbors = {node: set(nx_graph[node]) for node in nx_graph}
     orbit = state["orbit_by_node"]
     for source, target in combinations(sorted(node for node in nx_graph if node != root), 2):
-        a, b = neighbors[source], neighbors[target]
-        common = a & b
-        union_size = len(a) + len(b) - len(common)
-        jaccard = len(common) / union_size if union_size else 0.0
-        same_orbit = orbit[source] == orbit[target]
-        orbit_evidence = int(same_orbit and bool(a) and bool(b))
-        twin_type = None
-        if target not in full_neighbors[source] and full_neighbors[source] == full_neighbors[target]:
-            twin_type = "false_twins"
-        elif target in full_neighbors[source] and (full_neighbors[source] | {source}) == (full_neighbors[target] | {target}):
-            twin_type = "true_twins"
-        yield {"source": source, "target": target, "same_orbit": same_orbit,
-               "orbit_id": orbit[source] if same_orbit else None,
-               "common_neighbors": sorted(common), "jaccard": jaccard,
-               "orbit_evidence": orbit_evidence, "score": (orbit_evidence + jaccard) / 2,
-               "twin_type": twin_type}
+        yield _pair_features(source, target, neighbors, full_neighbors, orbit)
+
+
+def _relevant_pair_keys(nx_graph: nx.Graph, state: dict, root: str | None,
+                        exclude_root: bool, threshold: float,
+                        neighbors: dict[str, set[str]] | None = None) -> Iterator[tuple[str, str]]:
+    """Yield exactly the pairs that can still pass the candidate rule.
+
+    A pair outside a common non-trivial orbit has O=0. A pair without a
+    shared effective neighbour has J=0. These two facts let sparse large
+    graphs avoid a quadratic scan without changing a score or candidate.
+    """
+    eligible = sorted(node for node in nx_graph if node != root)
+    neighbors = neighbors if neighbors is not None else _neighborhoods(nx_graph, root, exclude_root)
+    orbit = state["orbit_by_node"]
+    by_effective_neighbor: dict[str, list[str]] = defaultdict(list)
+    for node in eligible:
+        for neighbor in neighbors[node]:
+            by_effective_neighbor[neighbor].append(node)
+
+    def pair_count(size: int) -> int:
+        return size * (size - 1) // 2
+
+    if threshold > .5:
+        upper_bound = 0
+        for holders in by_effective_neighbor.values():
+            counts: dict[int, int] = defaultdict(int)
+            for node in holders:
+                counts[orbit[node]] += 1
+            upper_bound += sum(pair_count(size) for size in counts.values())
+    else:
+        orbit_counts: dict[int, int] = defaultdict(int)
+        for node in eligible:
+            if neighbors[node]:
+                orbit_counts[orbit[node]] += 1
+        upper_bound = sum(pair_count(size) for size in orbit_counts.values())
+        upper_bound += sum(pair_count(len(holders)) for holders in by_effective_neighbor.values())
+    if upper_bound > MAX_DETAILED_PAIRS:
+        raise ValueError(
+            f"Для выбранного порога верхняя оценка подробной проверки превышает {MAX_DETAILED_PAIRS} пар. "
+            "Выберите центр и меньший радиус либо повысьте порог; скрытого усечения результатов нет."
+        )
+
+    seen: set[tuple[str, str]] = set()
+
+    def remember(source: str, target: str) -> tuple[str, str] | None:
+        key = (source, target) if source < target else (target, source)
+        if key in seen:
+            return None
+        if len(seen) >= MAX_DETAILED_PAIRS:
+            raise ValueError(
+                f"Структура графа требует подробно проверить более {MAX_DETAILED_PAIRS} пар. "
+                "Выберите центр и меньший радиус либо повысьте порог; скрытого усечения результатов нет."
+            )
+        seen.add(key)
+        return key
+
+    if threshold <= .5:
+        # Every same-orbit pair with non-empty effective neighbourhoods can
+        # reach the threshold even when J=0.
+        by_orbit: dict[int, list[str]] = defaultdict(list)
+        for node in eligible:
+            if neighbors[node]:
+                by_orbit[orbit[node]].append(node)
+        for orbit_id in sorted(by_orbit):
+            for source, target in combinations(sorted(by_orbit[orbit_id]), 2):
+                key = remember(source, target)
+                if key is not None:
+                    yield key
+
+    # A cross-orbit pair, and every pair at threshold > .5, needs J>0.
+    # Generate such pairs through the shared effective neighbour itself.
+    for common_neighbor in sorted(by_effective_neighbor):
+        holders = sorted(by_effective_neighbor[common_neighbor])
+        for source, target in combinations(holders, 2):
+            if threshold > .5 and orbit[source] != orbit[target]:
+                continue
+            key = remember(source, target)
+            if key is not None:
+                yield key
+
+
+def _iter_relevant_pair_features(nx_graph: nx.Graph, state: dict, root: str | None,
+                                 exclude_root: bool, threshold: float,
+                                 neighbors: dict[str, set[str]] | None = None) -> Iterator[dict]:
+    neighbors = neighbors if neighbors is not None else _neighborhoods(nx_graph, root, exclude_root)
+    full_neighbors = neighbors if root is None or not exclude_root else {
+        node: set(nx_graph[node]) for node in nx_graph
+    }
+    orbit = state["orbit_by_node"]
+    for source, target in _relevant_pair_keys(
+            nx_graph, state, root, exclude_root, threshold, neighbors):
+        yield _pair_features(source, target, neighbors, full_neighbors, orbit)
 
 
 def _has_evidence(pair: dict) -> bool:
@@ -208,13 +319,20 @@ def analyze_graph(graph: dict, options: dict | None = None) -> dict:
     if empty_count:
         warnings.append(f"У {empty_count} вершин пустые сравниваемые окрестности.")
     candidate_count = 0
+    candidate_score_min: float | None = None
+    candidate_score_max: float | None = None
+    scored_pair_count = 0
     candidate_nodes: set[str] = set()
     heap: list[tuple] = []
     rank = {node: i for i, node in enumerate(sorted(nx_graph.nodes))}
-    for pair in _iter_pair_features(nx_graph, state, root, options["exclude_root"]):
+    for pair in _iter_relevant_pair_features(
+            nx_graph, state, root, options["exclude_root"], options["threshold"], neighbors):
+        scored_pair_count += 1
         if pair["score"] < options["threshold"] or not _has_evidence(pair):
             continue
         candidate_count += 1
+        candidate_score_min = pair["score"] if candidate_score_min is None else min(candidate_score_min, pair["score"])
+        candidate_score_max = pair["score"] if candidate_score_max is None else max(candidate_score_max, pair["score"])
         candidate_nodes.update((pair["source"], pair["target"]))
         if not options["max_pairs"]:
             continue
@@ -228,38 +346,51 @@ def analyze_graph(graph: dict, options: dict | None = None) -> dict:
         pair["reasons"] = _pair_reasons(pair)
     if candidate_count > len(pairs):
         warnings.append(f"Показаны {len(pairs)} из {candidate_count} пар.")
-    try:
-        positions = nx.spring_layout(nx_graph, seed=options["layout_seed"], iterations=45, scale=1.0, method="force") if nx_graph else {}
-        options["layout_method_actual"] = "spring"
-    except ImportError:
-        # Spring layout requires the scipy extra; fall back to circular.
+    count = nx_graph.number_of_nodes()
+    edge_count = nx_graph.number_of_edges()
+    source_positions = {
+        node["id"]: (float(node["x"]), float(node["y"]))
+        for node in selected["nodes"] if "x" in node and "y" in node
+    }
+    if count > SPRING_LAYOUT_MAX_NODES and len(source_positions) == count:
+        positions = source_positions
+        options["layout_method_actual"] = "source"
+    elif count > SPRING_LAYOUT_MAX_NODES:
         positions = nx.circular_layout(nx_graph)
-        options["layout_method_actual"] = "circular"
-        warnings.append("Для визуализации использована круговая раскладка: разреженная spring-раскладка недоступна.")
+        options["layout_method_actual"] = "circular-large"
+        warnings.append("Для большой области использована линейная круговая раскладка; она влияет только на карту.")
+    else:
+        spacing = 4.6 / max(count ** .5, 1) if count > 120 else None
+        try:
+            positions = nx.spring_layout(
+                nx_graph,
+                seed=options["layout_seed"],
+                iterations=70 if spacing else 45,
+                k=spacing,
+                scale=1.0,
+                method="force",
+            ) if nx_graph else {}
+            options["layout_method_actual"] = "spring-spaced" if spacing else "spring"
+        except ImportError:
+            # Spring layout requires the scipy extra; fall back to circular.
+            positions = nx.circular_layout(nx_graph)
+            options["layout_method_actual"] = "circular"
+            warnings.append("Для визуализации использована круговая раскладка: разреженная spring-раскладка недоступна.")
     for node in selected["nodes"]:
         identifier = node["id"]
         node.update(orbit=state["orbit_by_node"][identifier], degree=int(nx_graph.degree(identifier)),
                     x=float(positions[identifier][0]), y=float(positions[identifier][1]))
-    count = nx_graph.number_of_nodes()
-    edge_count = nx_graph.number_of_edges()
-    spacing = 4.6 / max(count ** .5, 1) if count > 120 else None
-    if spacing:
-        try:
-            positions = nx.spring_layout(nx_graph, seed=options["layout_seed"], iterations=90,
-                                         k=spacing, scale=1.0, method="force")
-            options["layout_method_actual"] = "spring-spaced"
-            for node in selected["nodes"]:
-                identifier = node["id"]
-                node["x"] = float(positions[identifier][0])
-                node["y"] = float(positions[identifier][1])
-        except ImportError:
-            spacing = None
-    summary = {"node_count": count, "edge_count": edge_count, "density": nx.density(nx_graph),
+    eligible_count = count - int(root is not None)
+    possible_pair_count = eligible_count * (eligible_count - 1) // 2
+    summary = {"node_count": count, "eligible_node_count": eligible_count,
+               "edge_count": edge_count, "density": nx.density(nx_graph),
                "component_count": nx.number_connected_components(nx_graph), "orbit_count": len(state["orbits"]),
                "nontrivial_orbits": sum(orbit["size"] > 1 for orbit in state["orbits"]),
                "group_order": state["group_order"], "group_order_exact": state["group_order_exact"],
                "group_order_mantissa": state["group_order_mantissa"], "group_order_exponent": state["group_order_exponent"],
+               "possible_pair_count": possible_pair_count, "scored_pair_count": scored_pair_count,
                "candidate_count": candidate_count, "returned_pair_count": len(pairs),
+               "candidate_score_min": candidate_score_min, "candidate_score_max": candidate_score_max,
                "average_degree": 2 * edge_count / count if count else 0,
                "isolated_count": nx.number_of_isolates(nx_graph), "elapsed_ms": (perf_counter() - started) * 1000}
     return {"graph": selected, "options": options, "summary": summary, "orbits": state["orbits"],

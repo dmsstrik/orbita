@@ -230,7 +230,7 @@ def import_labels(payload: LabelsRequest):
 
 @app.post("/api/analyze")
 def analyze(payload: AnalysisRequest):
-    return run_job("analyze", normalize_graph(payload.graph), payload.options.model_dump(), timeout=30)
+    return run_job("analyze", payload.graph, payload.options.model_dump(), timeout=30)
 
 
 @app.post("/api/experiments")

@@ -4,8 +4,9 @@ import math
 import networkx as nx
 import pytest
 
-from app.analysis import analyze_graph
-from app.ingest import normalize_graph
+from app.analysis import (_automorphism_state, _has_evidence, _iter_pair_features,
+                          _prepare_graph, _relevant_pair_keys, analyze_graph)
+from app.ingest import demo_graph, normalize_graph
 
 
 def graph_data(graph):
@@ -174,3 +175,55 @@ def test_500_nodes_layout_does_not_require_scipy_or_truncate():
     assert result["summary"]["node_count"] == 500
     assert len(result["graph"]["nodes"]) == 500
     assert all(math.isfinite(node[axis]) for node in result["graph"]["nodes"] for axis in ("x", "y"))
+
+
+def test_large_source_requires_local_scope_but_analyzes_selected_neighborhood():
+    graph = graph_data(nx.path_graph(10_001))
+    with pytest.raises(ValueError, match="выберите центр"):
+        analyze_graph(graph, {"max_pairs": 0})
+    result = analyze_graph(graph, {"root": "0", "radius": 2, "max_pairs": 0})
+    assert result["summary"]["node_count"] == 3
+    assert {node["id"] for node in result["graph"]["nodes"]} == {"0", "1", "2"}
+
+
+@pytest.mark.parametrize("threshold", [0, .3, .5, .65, 1])
+def test_sparse_pair_screening_is_equivalent_to_exhaustive_pairs(threshold):
+    graph = graph_data(nx.gnp_random_graph(14, .22, seed=17))
+    _selected, nx_graph = _prepare_graph(graph)
+    state = _automorphism_state(nx_graph)
+    expected = [
+        pair for pair in _iter_pair_features(nx_graph, state, None, True)
+        if pair["score"] >= threshold and _has_evidence(pair)
+    ]
+    expected.sort(key=lambda pair: (-pair["score"], pair["source"], pair["target"]))
+    actual = analyze_graph(graph, {"threshold": threshold, "max_pairs": 20_000})
+    actual_core = [{key: value for key, value in pair.items() if key != "reasons"} for pair in actual["pairs"]]
+    assert actual_core == expected
+    assert actual["summary"]["candidate_count"] == len(expected)
+    assert actual["summary"]["scored_pair_count"] <= actual["summary"]["possible_pair_count"]
+
+
+def test_10000_vertex_example_is_analyzed_whole_and_finds_planted_twins():
+    result = analyze_graph(demo_graph("social-10000"))
+    summary = result["summary"]
+    assert summary["node_count"] == summary["eligible_node_count"] == 10_000
+    assert summary["edge_count"] == 30_311
+    assert summary["possible_pair_count"] == 49_995_000
+    assert summary["scored_pair_count"] == summary["candidate_count"] == 91
+    assert summary["candidate_score_min"] == pytest.approx(2 / 3)
+    assert summary["candidate_score_max"] == 1
+    planted = result["graph"]["metadata"]["planted_clones"]
+    planted_true = result["graph"]["metadata"]["planted_true_twins"]
+    returned = {frozenset((pair["source"], pair["target"])) for pair in result["pairs"]}
+    assert all(frozenset((clone, source)) in returned for clone, source in planted.items())
+    assert all(frozenset((pair["source"], pair["target"])) in returned for pair in planted_true)
+    assert sum(pair["twin_type"] == "false_twins" for pair in result["pairs"]) == 11
+    assert sum(pair["twin_type"] == "true_twins" for pair in result["pairs"]) == 80
+    assert len({round(pair["score"], 6) for pair in result["pairs"]}) == 9
+
+
+def test_pair_explosion_returns_an_explicit_error_instead_of_truncating():
+    graph = nx.relabel_nodes(nx.star_graph(3_200), str)
+    state = {"orbit_by_node": {node: (0 if node == "0" else 1) for node in graph}}
+    with pytest.raises(ValueError, match="скрытого усечения результатов нет"):
+        next(_relevant_pair_keys(graph, state, None, True, .65))

@@ -4,7 +4,7 @@ from pathlib import Path
 import networkx as nx
 import pytest
 
-from app.ingest import apply_labels, demo_graph, list_demos, normalize_graph, parse_graph
+from app.ingest import MAX_EDGES, MAX_NODES, apply_labels, demo_graph, list_demos, normalize_graph, parse_graph
 
 
 def test_json_preserves_isolates_and_normalizes_edges():
@@ -50,8 +50,8 @@ def test_legacy_encoding():
     {"nodes": [{"id": "a", "orbit": 10**1000}]},
     {"nodes": [{"id": "a", "label": chr(0xD800)}]},
     {"name": chr(0xD800), "nodes": ["a"]},
-    {"nodes": list(range(2001))},
-    {"edges": [["a", "b"]] * 100_001},
+    {"nodes": list(range(MAX_NODES + 1))},
+    {"edges": [["a", "b"]] * (MAX_EDGES + 1)},
     {"nodes": []},
 ])
 def test_invalid_graphs_raise_readable_value_errors(data):
@@ -111,7 +111,7 @@ def test_demo_ground_truth_and_topology_are_consistent():
     assert set(g["clone_partial"]) != set(g["u24"])
     assert "u29" in g["clone_partial"] and "u29" not in g["u24"]
     assert len([n for n in graph["nodes"] if n.get("truth") == "bot"]) == 3
-    assert len(list_demos()) == 3
+    assert len(list_demos()) >= 4
     graph["nodes"][0]["label"] = "mutated"
     assert demo_graph()["nodes"][0]["label"] != "mutated"
 

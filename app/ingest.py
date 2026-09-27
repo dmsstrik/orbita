@@ -10,8 +10,8 @@ import math
 import re
 from pathlib import Path
 
-MAX_NODES = 2000
-MAX_EDGES = 100_000
+MAX_NODES = 20_000
+MAX_EDGES = 500_000
 MAX_CONTENT_BYTES = 20_000_000
 TRUTHS = {"bot", "human", "unknown"}
 
@@ -279,6 +279,8 @@ DEMO_CATALOG = [
     {"id": "social", "name": "Локальная социальная сеть", "description": "35 модельных аккаунтов, три сообщества, два точных и один частичный клон; известная разметка."},
     {"id": "star", "name": "Звезда", "description": "Центр и 12 структурно эквивалентных листьев."},
     {"id": "asymmetric", "name": "Асимметричный граф Фрухта", "description": "12 вершин одной степени и только тождественный автоморфизм; степень не определяет орбиту."},
+    {"id": "facebook-large", "name": "SNAP Facebook · большой граф", "description": "Объединение десяти эго-сетей: 3963 аккаунта и 88 156 связей; область на 1812 вершинах вокруг аккаунта 1684."},
+    {"id": "social-10000", "name": "Модельная сеть · 10 000 вершин", "description": "Разреженный граф с 30 311 связями и 90 контрольными симметричными парами; оценки распределены от 0,67 до 1,00."},
 ]
 
 
@@ -290,8 +292,11 @@ def demo_graph(demo_id: str = "social") -> dict:
     import networkx as nx
 
     if demo_id not in {item["id"] for item in DEMO_CATALOG}:
-        raise ValueError("Неизвестный пример. Доступны social, star и asymmetric.")
+        raise ValueError("Неизвестный пример.")
     item = next(item for item in DEMO_CATALOG if item["id"] == demo_id)
+    if demo_id in {"facebook-large", "social-10000"}:
+        path = Path(__file__).resolve().parents[1] / "examples" / f"{demo_id}.json"
+        return parse_graph(path.read_bytes(), path.name)
     metadata = {"source": "synthetic", "synthetic": True, "demo_id": demo_id,
                 "description": item["description"]}
     if demo_id == "social":
